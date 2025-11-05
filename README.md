@@ -1,0 +1,1 @@
+D-prime ved z rates. Chi^2 test som i Dahaene et al.
