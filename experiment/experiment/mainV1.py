@@ -42,36 +42,6 @@ import os
 import random
 from datetime import datetime
 
-# # --- 2. Define real Constants ---  
-
-# # Timing (in seconds)
-# FIXATION_DURATION = 2.0
-# FACE_DURATION = 1.0  # 500ms
-# MASK_DURATION = 0.5  # 250ms
-# ITI_DURATION = 1.0     # Inter-trial interval
-
-# # Trial Counts
-# N_PRACTICE_TRIALS = 10
-# N_MAIN_TRIALS = 200
-# N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS
-
-# # Prime list counts
-# N_POS_PRIMES = 70
-# N_NEG_PRIMES = 70
-# N_NEU_PRIMES = 35
-# N_NO_PRIMES = 35  # Total must match N_TOTAL_TRIALS
-
-# # Rating keys
-# RATING_KEYS = ['1', '2', '3', '4', '5', '6', '7']
-# QUIT_KEY = 'escape'
-# VALID_KEYS = RATING_KEYS + [QUIT_KEY]
-
-# # Block breaks (trial numbers *within the main block*)
-# # Breaks after 50, 100, and 150 main trials.
-# # (0-indexed, so 49, 99, 149)
-# MAIN_TRIAL_BREAK_POINTS = [49, 99, 149]
-
-
 
 
 # --- 2. Define Constants test ---
@@ -80,7 +50,9 @@ from datetime import datetime
 FIXATION_DURATION = 2.0
 FACE_DURATION = 1.0  # 500ms
 MASK_DURATION = 0.5  # 250ms
-ITI_DURATION = 1.0     # Inter-trial interval
+ITI_DURATION = 2.0     # Inter-trial interval
+BABBLE_DURATION_BEFORE_PRIMES = 1.0
+
 
 # Trial Counts
 N_PRACTICE_TRIALS = 2    # Was 10
@@ -262,8 +234,17 @@ def load_reusable_stimuli(win, base_dir):
         height=0.05,
         color='white'
     )
+
+    # 7. Inter trial text
+    stimuli['ITI-text'] =  visual.TextStim(
+        win,
+        text="A new trial will begin",
+        height=0.05,
+        color='white',
+        wrapWidth=1.5
+    )
     
-    # 7. Out Sound (sensor-beep.wav)
+    # 8. Out Sound (sensor-beep.wav)
     beep_path = os.path.join(base_dir, 'sensor-beep.wav')
     stimuli['out_sound'] = sound.Sound(beep_path, autoLog=False)
     
@@ -474,7 +455,8 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
         prime_sound = sound.Sound(prime_path, autoLog=False)
 
     # Execute Timeline
-    babble_sound.play()  # Asynchronous (this is the default)
+    babble_sound.play()  
+    core.wait(BABBLE_DURATION_BEFORE_PRIMES)
 
     # --- Synchronous sounds (play and wait) ---
     mask1_sound.play()
@@ -483,6 +465,7 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
     if prime_sound:
         prime_sound.play()
         core.wait(prime_sound.getDuration()) # Manually pause script
+    
 
     mask2_sound.play()
     core.wait(mask2_sound.getDuration()) # Manually pause script
@@ -527,11 +510,10 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
     trial_handler.addData('rt', rt)
     
     # --- 6. ITI (Blank Screen) ---
+    stimuli['ITI-text'].draw()
     win.flip()
-    core.wait(ITI_DURATION)
-    
-    # --- 7. Out Sound ---
     stimuli['out_sound'].play() # Plays during next trial's fixation
+    core.wait(ITI_DURATION)
     
     # --- 8. Check for Quit ---
     if key == QUIT_KEY:
@@ -602,17 +584,17 @@ def main():
             if result == 'QUIT':
                 break
                 
-            # Show practice feedback
-            response = practice_trials.data['response_key'][-1]
-            if response:
-                feedback_msg = f"You pressed: {response}"
-            else:
-                feedback_msg = "You did not respond in time."
+            # # Show practice feedback
+            # response = practice_trials.data['response_key'][-1]
+            # if response:
+            #     feedback_msg = f"You pressed: {response}"
+            # else:
+            #     feedback_msg = "You did not respond in time."
                 
-            stimuli['feedback'].setText(feedback_msg)
-            stimuli['feedback'].draw()
-            win.flip()
-            core.wait(1.5)
+            # stimuli['feedback'].setText(feedback_msg)
+            # stimuli['feedback'].draw()
+            # win.flip()
+            # core.wait(1.5)
             
             # This is necessary *after* adding data
             exp_handler.nextEntry() 

@@ -1,0 +1,7 @@
+﻿trial_i,face_file,prime_file,prime_valence,babbling_file,mask1_file,mask2_file,practice.thisRepN,practice.thisTrialN,practice.thisN,practice.thisIndex,main.thisRepN,main.thisTrialN,main.thisN,main.thisIndex,thisRow.t,notes,response_key,rt,Participant ID,Session,date,
+1,AF18ANS.JPG,frihed_compressed.wav,positive,bab4.wav,drukne_reversed.wav,gratis_reversed.wav,0,0,0,0,0,-1,-1,0,,,2,1.3458104589954019,test20,001,2025-11-08_19-01-19,
+7,AF29ANS.JPG,statue_compressed.wav,neutral,bab8.wav,gade_reversed.wav,frihed_reversed.wav,0,1,1,1,0,-1,-1,0,,,4,1.7436418750003213,test20,001,2025-11-08_19-01-19,
+3,AM01HAS.JPG,søsyg_compressed.wav,negative,bab8.wav,forfald_reversed.wav,bombe_reversed.wav,,,,,0,0,0,0,,,2,1.4600504160043783,test20,001,2025-11-08_19-01-19,
+10,AF27ANS.JPG,SILENCE,no-prime,bab3.wav,afvist_reversed.wav,drukne_reversed.wav,,,,,0,1,1,1,,,2,0.2860021250016871,test20,001,2025-11-08_19-01-19,
+2,AF20ANS.JPG,afskyr_compressed.wav,negative,bab3.wav,beundret_reversed.wav,festlig_reversed.wav,,,,,0,2,2,2,,,6,3.6191619169985643,test20,001,2025-11-08_19-01-19,
+,,,,,,,,,,,,,,,,,escape,0.5317324999996345,,,,
