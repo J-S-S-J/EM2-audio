@@ -27,7 +27,6 @@ import os.path
 # Timing (in seconds)
 FIXATION_DURATION = 2.0
 ITI_DURATION = 2.0     # Inter-trial interval
-BABBLE_DURATION_BEFORE_PRIMES = 1.0
 
 
 # Trial Counts
@@ -324,7 +323,7 @@ def generate_trial_list(base_dir):
 
 # --- 5. Core Logic: Trial Execution ---
 
-def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
+def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock, babling_before_prime):
     """
     Executes a single trial based on the trial_info dictionary.
     """
@@ -359,7 +358,7 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
 
     # Execute Timeline
     babble_sound.play()  
-    core.wait(BABBLE_DURATION_BEFORE_PRIMES) # Babble for 1s
+    core.wait(babling_before_prime) # Babble for 1s
 
     # --- Synchronous sounds (play and wait) ---
     mask1_sound.play()
@@ -424,8 +423,8 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
     # --- 6. ITI (Inter-Trial Interval) ---
     stimuli['ITI_text'].draw()
     win.flip()
-    stimuli['out_sound'].play() # Play beep during ITI
     core.wait(ITI_DURATION)
+    stimuli['out_sound'].play() 
     
     # --- 7. Check for Quit ---
     if key == QUIT_KEY:
@@ -478,7 +477,7 @@ def main():
         
         for trial in practice_trials:
             result = run_trial(
-                win, base_dir, trial, practice_trials, stimuli, rt_clock
+                win, base_dir, trial, practice_trials, stimuli, rt_clock, BABBLE_DURATION_BEFORE_PRIMES
             )
             
             if result == 'QUIT':
@@ -501,9 +500,12 @@ def main():
         quit_experiment = False
         for trial in main_trials:
             current_trial_n = main_trials.thisN 
+
+
+            val = random.uniform(0.5,1.5)
             
             result = run_trial(
-                win, base_dir, trial, main_trials, stimuli, rt_clock
+                win, base_dir, trial, main_trials, stimuli, rt_clock, val
             )
 
             if result == 'QUIT':

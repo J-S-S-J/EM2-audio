@@ -51,7 +51,6 @@ FIXATION_DURATION = 2.0
 FACE_DURATION = 1.0  # 500ms
 MASK_DURATION = 0.5  # 250ms
 ITI_DURATION = 2.0     # Inter-trial interval
-BABBLE_DURATION_BEFORE_PRIMES = 1.0
 
 
 # Trial Counts
@@ -405,7 +404,7 @@ def generate_trial_list(base_dir):
 
 # --- 5. Core Logic: Trial Execution ---
 
-def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
+def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock,bable_duration_before_prime):
     """
     Executes a single trial based on the trial_info dictionary.
     
@@ -456,7 +455,7 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
 
     # Execute Timeline
     babble_sound.play()  
-    core.wait(BABBLE_DURATION_BEFORE_PRIMES)
+    core.wait(bable_duration_before_prime)
 
     # --- Synchronous sounds (play and wait) ---
     mask1_sound.play()
@@ -512,8 +511,8 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock):
     # --- 6. ITI (Blank Screen) ---
     stimuli['ITI-text'].draw()
     win.flip()
-    stimuli['out_sound'].play() # Plays during next trial's fixation
     core.wait(ITI_DURATION)
+    stimuli['out_sound'].play() 
     
     # --- 8. Check for Quit ---
     if key == QUIT_KEY:
@@ -577,7 +576,7 @@ def main():
         for trial in practice_trials:
             # Run the trial
             result = run_trial(
-                win, base_dir, trial, practice_trials, stimuli, rt_clock
+                win, base_dir, trial, practice_trials, stimuli, rt_clock, 1
             )
             
             # Check for quit signal
@@ -616,10 +615,11 @@ def main():
         for trial in main_trials:
             # main_trials.thisN is the 0-indexed number of the *current loop*
             current_trial_n = main_trials.thisN 
+            val = random.uniform(0.5,1.5)
             
             # Run the trial
             result = run_trial(
-                win, base_dir, trial, main_trials, stimuli, rt_clock
+                win, base_dir, trial, main_trials, stimuli, rt_clock, val
             )
 
             # Check for quit signal
