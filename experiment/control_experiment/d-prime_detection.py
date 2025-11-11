@@ -2,35 +2,35 @@
 # -*- coding: utf-8 -*-
 """
 ================================================================================
-PsychoPy Subliminal Audio Priming (TYPING CONTROL)
+PsychoPy Subliminal Audio Priming (SDT / d-prime DETECTION)
 ================================================================================
 
-Dette script implementerer et kontrol-eksperiment med tidskomprimerede ord.
-- Objektiv: Teste på hvilket niveau af tidskomprimering deltagere
-             ikke længere kan identificere et maskeret ord.
-- Design: Deltagere hører en fuld audiosekvens (babble, mask, prime, mask)
-          og skal derefter skrive det ord, de hørte.
-- Stimuli: 8 niveauer af tidskomprimering (0.1 til 0.8).
-- Task: Fri-tekst input, afsluttes med 'Enter'.
+Dette script implementerer et Signal Detection Theory (SDT) kontrol-eksperiment.
+- Objektiv: Måle d' (sensitivitet) for at detektere et ord
+             ved 8 forskellige niveauer af tidskomprimering.
+- Design: Deltagere hører en audiosekvens og skal angive,
+          om de hørte et ord eller ej (Ja/Nej).
+- Trials: 50% Signal-Present (et ord er til stede)
+          50% Signal-Absent (stilhed er til stede) 
+- Task: Ja/Nej (2-AFC), 'm' for Ja, 'z' for Nej.
 
 File Struktur:
 /Experiment_Folder/
 |
-├── main_typing_experiment.py  (Dette script)
+├── main_detection_experiment.py  (Dette script)
 ├── sensor-beep.wav
 |
-├── /audio/                    <-- NY MAPPE
+├── /audio/
 |   ├── /0.1/
-|   |   ├── ord1.wav
+|   |   ├── bange_compressed.wav
 |   |   └── ...
-|   ├── /0.2/
 |   ...
 |   └── /0.8/
 |
 ├── /masks/
 ├── /babbling/
 |
-└── /data_typing/              <-- Ny output mappe
+└── /data_detection/              <-- Ny output mappe
 """
 
 # --- 1. Import Libraries ---
@@ -45,29 +45,30 @@ import os.path
 # Timing (in seconds)
 FIXATION_DURATION = 2.0
 ITI_DURATION = 2.0     # Inter-trial interval
-# Varighed af babble FØR mask/prime sekvensen
-BABBLE_DURATION_BEFORE_PRIMES = 1.0
+# BABBLE_DURATION_BEFORE_PRIMES er nu tilfældig (defineres i main loop)
 
 
 # --- Trial Counts & Stimuli Setup ---
-# Mapper som scriptet vil lede efter i /audio/ mappen
 COMPRESSION_LEVELS = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8']
-
-# Antal ord der skal vælges fra HVER mappe
-N_PRACTICE_WORDS_PER_FOLDER = 1
-N_MAIN_WORDS_PER_FOLDER = 1 # vi skal aftale hvor mange
-
-# Totaler (beregnes automatisk)
 N_LEVELS = len(COMPRESSION_LEVELS)
-N_PRACTICE_TRIALS = N_LEVELS * N_PRACTICE_WORDS_PER_FOLDER # Giver 8
-N_MAIN_TRIALS = N_LEVELS * N_MAIN_WORDS_PER_FOLDER     # Giver 80
+
+# Antal "Signal-Present" trials per niveau
+N_PRACTICE_REPS_PER_LEVEL = 1 # 1 'present' + 1 'absent' per niveau
+N_MAIN_REPS_PER_LEVEL = 1   # 10 'present' + 10 'absent' per niveau
+
+
+N_PRACTICE_TRIALS = N_LEVELS * N_PRACTICE_REPS_PER_LEVEL 
+# N_MAIN_TRIALS = 8 levels * 10 reps * 2 types (pres/abs) = 160
+N_MAIN_TRIALS = N_LEVELS * N_MAIN_REPS_PER_LEVEL * 2
 
 # Taster
 QUIT_KEY = 'escape'
-SUBMIT_KEY = 'return'
+YES_KEY = 'm' # 'm' er til højre på et QWERTY-tastatur
+NO_KEY = 'z'  # 'z' er til venstre
+VALID_KEYS = [YES_KEY, NO_KEY, QUIT_KEY]
 
-# Pauser (efter 20, 40, og 60 af de 80 main trials)
-MAIN_TRIAL_BREAK_POINTS = []
+# Pauser (efter 40, 80, og 120 af de 160 main trials)
+MAIN_TRIAL_BREAK_POINTS = [] # [39, 79, 119]
 
 
 # --- 3. Setup Functions ---
@@ -93,7 +94,7 @@ def setup_experiment(participant_info):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Gemmer data i en separat mappe for dette eksperiment
-    data_dir = os.path.join(base_dir, 'data_typing')
+    data_dir = os.path.join(base_dir, 'data_detection')
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
         print(f"Created data directory: {data_dir}")
@@ -102,13 +103,13 @@ def setup_experiment(participant_info):
     file_name = (
         f"{participant_info['Participant ID']}_"
         f"{participant_info['Session']}_"
-        f"{participant_info['date']}_typing" # Tilføj suffix
+        f"{participant_info['date']}_detection" # Tilføj suffix
     )
     
     data_file_path = os.path.join(data_dir, file_name)
     
     exp_handler = data.ExperimentHandler(
-        name='SubliminalAudio_Typing',
+        name='SubliminalAudio_Detection',
         version='1.0',
         extraInfo=participant_info,
         runtimeInfo=True,
@@ -147,24 +148,24 @@ def load_reusable_stimuli(win, base_dir):
         color='white'
     )
     
-    # 2. Prompt-tekst (Hvad hørte du?)
+    # 2. Prompt-tekst (Ja/Nej)
     stimuli['prompt_text'] = visual.TextStim(
         win,
-        text="Hvilket ord mener du, du hørte?",
-        height=0.06,
+        text="Hørte du et ord?",
+        height=0.08,
         color='white',
         wrapWidth=1.5,
-        pos=(0, 0.3) # Placeret i toppen
+        pos=(0, 0.1) # Lidt over midten
     )
 
-    # 3. Tekst-display (viser hvad brugeren skriver)
-    stimuli['typing_display'] = visual.TextStim(
+    # 3. Taste-prompt (Viser tasterne)
+    stimuli['key_prompt'] = visual.TextStim(
         win,
-        text="", # Vil blive sat på hvert trial
-        height=0.1,
+        text=f"NEJ = '{NO_KEY}'   /   JA = '{YES_KEY}'",
+        height=0.05,
         color='white',
         wrapWidth=1.5,
-        pos=(0, 0) # Centreret
+        pos=(0, -0.2) # Lidt under midten
     )
     
     # 4. Instruktionstekst (generisk)
@@ -176,7 +177,7 @@ def load_reusable_stimuli(win, base_dir):
         wrapWidth=1.5
     )
 
-    # 5. Feedback-tekst (til træning)
+    # 5. Feedback-tekst (Beholdt for struktur, men bruges ikke)
     stimuli['feedback'] = visual.TextStim(
         win,
         text="",
@@ -222,15 +223,20 @@ def get_files_from_dir(directory):
     return [f for f in os.listdir(directory) if not f.startswith('.')]
 
 def get_word_from_filename(filename):
-    """Hjælperfunktion til at få 'ord' fra 'ord.wav'."""
-    return os.path.splitext(filename)[0].split('_')[0]
+    """
+    Hjælpefunktion til at få 'bange' fra 'bange_compressed.wav'.
+    """
+    # f.eks. 'bange_compressed.wav' -> 'bange_compressed'
+    filename_without_ext = os.path.splitext(filename)[0]
+    # f.eks. 'bange_compressed' -> ['bange', 'compressed'] -> 'bange'
+    return filename_without_ext.split('_')[0]
 
 def generate_trial_lists(base_dir):
     """
-    Genererer trial-lister for både træning og hovedeksperiment.
-    Sikrer at de samme ord ikke bruges i begge.
+    Genererer trial-lister med 50% Signal-Present og 50% Signal-Absent
+    for både træning og hovedeksperiment.
     """
-    print("Generating trial lists...")
+    print("Generating SDT trial lists...")
     
     # --- Stier ---
     audio_dir = os.path.join(base_dir, 'audio')
@@ -252,7 +258,8 @@ def generate_trial_lists(base_dir):
     practice_list = []
     main_list = []
     
-    words_needed_per_folder = N_PRACTICE_WORDS_PER_FOLDER + N_MAIN_WORDS_PER_FOLDER
+    # Antal *ord-filer* vi skal bruge fra hver mappe
+    files_needed_per_folder = N_PRACTICE_REPS_PER_LEVEL + N_MAIN_REPS_PER_LEVEL
 
     # --- Loop gennem hvert komprimeringsniveau ---
     for level in COMPRESSION_LEVELS:
@@ -265,21 +272,23 @@ def generate_trial_lists(base_dir):
             core.quit()
             
         # Tjek om vi har nok ord
-        if len(files_in_folder) < words_needed_per_folder:
+        if len(files_in_folder) < files_needed_per_folder:
             print(f"FATAL ERROR: Ikke nok filer i mappen {folder_path}.")
-            print(f"Fandt {len(files_in_folder)}, men skal bruge {words_needed_per_folder} "
-                  f"({N_PRACTICE_WORDS_PER_FOLDER} practice + {N_MAIN_WORDS_PER_FOLDER} main).")
+            print(f"Fandt {len(files_in_folder)}, men skal bruge {files_needed_per_folder} "
+                  f"({N_PRACTICE_REPS_PER_LEVEL} practice + {N_MAIN_REPS_PER_LEVEL} main).")
             core.quit()
             
         # Bland filerne og vælg
         random.shuffle(files_in_folder)
         
-        practice_files = files_in_folder[0:N_PRACTICE_WORDS_PER_FOLDER]
-        main_files = files_in_folder[N_PRACTICE_WORDS_PER_FOLDER : words_needed_per_folder]
+        practice_files = files_in_folder[0:N_PRACTICE_REPS_PER_LEVEL]
+        main_files = files_in_folder[N_PRACTICE_REPS_PER_LEVEL : files_needed_per_folder]
         
-        # Opret practice trials
+        # --- Opret Practice Trials (Present + Absent) ---
         for f in practice_files:
+            # Signal-Present trial
             practice_list.append({
+                'signal_type': 'present',
                 'compression_level': level,
                 'prime_file': f,
                 'correct_word': get_word_from_filename(f),
@@ -287,13 +296,35 @@ def generate_trial_lists(base_dir):
                 'mask1_file': random.choice(mask_list),
                 'mask2_file': random.choice(mask_list)
             })
+            # Signal-Absent trial
+            practice_list.append({
+                'signal_type': 'absent',
+                'compression_level': level, # Stadig relevant for d'-analyse
+                'prime_file': 'SILENCE',
+                'correct_word': 'NA',
+                'babbling_file': random.choice(babbling_list),
+                'mask1_file': random.choice(mask_list),
+                'mask2_file': random.choice(mask_list)
+            })
             
-        # Opret main trials
+        # --- Opret Main Trials (Present + Absent) ---
         for f in main_files:
+            # Signal-Present trial
             main_list.append({
+                'signal_type': 'present',
                 'compression_level': level,
                 'prime_file': f,
                 'correct_word': get_word_from_filename(f),
+                'babbling_file': random.choice(babbling_list),
+                'mask1_file': random.choice(mask_list),
+                'mask2_file': random.choice(mask_list)
+            })
+            # Signal-Absent trial
+            main_list.append({
+                'signal_type': 'absent',
+                'compression_level': level,
+                'prime_file': 'SILENCE',
+                'correct_word': 'NA',
                 'babbling_file': random.choice(babbling_list),
                 'mask1_file': random.choice(mask_list),
                 'mask2_file': random.choice(mask_list)
@@ -327,97 +358,91 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock, babbl
     mask1_path = os.path.join(base_dir, 'masks', trial_info['mask1_file'])
     mask2_path = os.path.join(base_dir, 'masks', trial_info['mask2_file'])
     
-    # NY prime path
-    prime_path = os.path.join(
-        base_dir,
-        'audio',
-        trial_info['compression_level'],
-        trial_info['prime_file']
-    )
+    prime_sound = None # Vigtigt: Start som None
     
     try:
         babble_sound = sound.Sound(babble_path, autoLog=False)
         mask1_sound = sound.Sound(mask1_path, autoLog=False)
         mask2_sound = sound.Sound(mask2_path, autoLog=False)
-        prime_sound = sound.Sound(prime_path, autoLog=False)
+        
+        # Load kun prime-lyd hvis det er et 'present' trial
+        if trial_info['signal_type'] == 'present':
+            prime_path = os.path.join(
+                base_dir,
+                'audio',
+                trial_info['compression_level'],
+                trial_info['prime_file']
+            )
+            prime_sound = sound.Sound(prime_path, autoLog=False)
+            
     except Exception as e:
         print(f"FEJL ved indlæsning af lyd: {e}")
         return 'QUIT' # Afbryd hvis en lydfil er korrupt
 
     # Udfør tidslinje
     babble_sound.play()  
-    core.wait(babble_before_prime) # Babble i 1s
+    core.wait(babble_before_prime) # Tilfældig varighed
 
     # --- Synkrone lyde (spil og vent) ---
     mask1_sound.play()
     core.wait(mask1_sound.getDuration()) 
 
-    prime_sound.play()
-    core.wait(prime_sound.getDuration())
+    # Spil kun prime-lyden HVIS den er loadet (dvs. 'present' trial)
+    if prime_sound:
+        prime_sound.play()
+        core.wait(prime_sound.getDuration())
     
     mask2_sound.play()
     core.wait(mask2_sound.getDuration())
     
     babble_sound.stop()
     
-    # --- 3. Tekst-input (NYT) ---
+    # --- 3. Ja/Nej Respons ---
     
-    typed_string = ""
-    stimuli['typing_display'].setText(typed_string)
+    stimuli['prompt_text'].draw()
+    stimuli['key_prompt'].draw()
+    win.flip()
     
-    # Nulstil RT-ur. Vi fanger RT til det *første* tryk.
+    # Nulstil RT-ur og vent på respons
     rt_clock.reset()
-    rt_first_press = None
-    
     event.clearEvents(eventType='keyboard')
-
-    # Typing-loop
-    while True:
-        # Tegn prompt og det indtastede
-        stimuli['prompt_text'].draw()
-        stimuli['typing_display'].draw()
-        win.flip()
-        
-        # Vent på et tastetryk
-        key_list = event.waitKeys(keyList=None, timeStamped=rt_clock)
-        key, timestamp = key_list[0]
-        
-        # Gem kun RT for det allerførste tastetryk
-        if rt_first_press is None:
-            rt_first_press = timestamp
-
-        # Håndter taster
-        if key == QUIT_KEY:
-            return 'QUIT'
-        elif key == SUBMIT_KEY:
-            break # Bryd løkken og aflever svar
-        elif key == 'backspace':
-            typed_string = typed_string[:-1]
-        elif key == 'space':
-            typed_string += ' ' # Tillad mellemrum
-        elif len(key) == 1: # Tjek om det er en enkelt karakter (a, b, 1, 2 etc.)
-            typed_string += key
-        
-        # Opdater teksten
-        stimuli['typing_display'].setText(typed_string)
-
     
+    response = event.waitKeys(
+        maxWait=float('inf'),
+        keyList=VALID_KEYS,
+        timeStamped=rt_clock
+    )
+    
+    key, rt = None, None
+    if response:
+        key = response[0][0]
+        rt = response[0][1]
+
     # --- 4. Gem Data ---
-    # Normaliser både svar og korrekt ord for at undgå fejl
-    submitted_word = typed_string.strip().lower()
-    correct_word = trial_info['correct_word'].strip().lower()
     
-    accuracy = 0
-    if submitted_word == correct_word:
-        accuracy = 1
+    # Find trial outcome (Hit, Miss, FA, CR)
+    signal = trial_info['signal_type']
+    outcome = "NA"
+    
+    if signal == 'present' and key == YES_KEY:
+        outcome = 'Hit'
+    elif signal == 'present' and key == NO_KEY:
+        outcome = 'Miss'
+    elif signal == 'absent' and key == YES_KEY:
+        outcome = 'False Alarm'
+    elif signal == 'absent' and key == NO_KEY:
+        outcome = 'Correct Rejection'
         
-    trial_handler.addData('response_word', submitted_word)
-    trial_handler.addData('rt_first_press', rt_first_press)
-    trial_handler.addData('accuracy', accuracy)
+    trial_handler.addData('response_key', key)
+    trial_handler.addData('rt', rt)
+    trial_handler.addData('trial_outcome', outcome)
+    
     # Gem også de data, der er i trial_info
+    trial_handler.addData('signal_type', trial_info['signal_type'])
     trial_handler.addData('compression_level', trial_info['compression_level'])
-    trial_handler.addData('correct_word', trial_info['correct_word']) # Gemmer det rene ord
+    trial_handler.addData('correct_word', trial_info['correct_word'])
     trial_handler.addData('prime_file', trial_info['prime_file'])
+    trial_handler.addData('babble_duration', babble_before_prime) # Gem tilfældig varighed
 
     
     # --- 5. ITI (Inter-Trial Interval) ---
@@ -425,6 +450,10 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock, babbl
     win.flip()
     core.wait(ITI_DURATION)
     stimuli['out_sound'].play() 
+    
+    # --- 6. Tjek for Quit ---
+    if key == QUIT_KEY:
+        return 'QUIT'
     
     return None
 
@@ -460,24 +489,27 @@ def main():
         # --- 4. Kør Træning ---
         practice_instructions = (
             "Velkommen til træningsrunden.\n\n"
-            "Du vil høre en række lyde. Din opgave er at identificere \n"
-            "det ord, der var gemt i lydene.\n\n"
-            "Efter lydene skal du skrive det ord, du hørte, \n"
-            "og trykke 'Enter' for at afgive dit svar.\n\n"
+            "Du vil høre en række lyde. Nogle gange er et ord gemt i lydene,\n"
+            "andre gange er der kun støj.\n\n"
+            "Din opgave er at trykke 'Ja' eller 'Nej' for, \n"
+            "om du mener, du hørte et ord.\n\n"
+            f"Tryk '{NO_KEY}' for NEJ.\n"
+            f"Tryk '{YES_KEY}' for JA.\n\n"
             "Tryk 'space' for at begynde."
         )
         show_instructions(win, stimuli['instructions'], practice_instructions)
         
         for trial in practice_trials:
-            val = random.uniform(0.5,1.5)
+            # Sæt tilfældig babble-varighed
+            val = random.uniform(0.5, 1.5)
             result = run_trial(
                 win, base_dir, trial, practice_trials, stimuli, rt_clock, val
             )
             
             if result == 'QUIT':
                 break
-                
             
+            # Ingen feedback i træning, som aftalt
             exp_handler.nextEntry() 
 
         if result == 'QUIT':
@@ -487,7 +519,7 @@ def main():
         main_instructions = (
             "Træning er slut. Nu begynder hovedeksperimentet.\n\n"
             "Opgaven er den samme.\n"
-            "Skriv det ord, du hører, og tryk 'Enter'.\n\n"
+            f"Tryk '{NO_KEY}' for NEJ, og '{YES_KEY}' for JA.\n\n"
             "Der vil være korte pauser undervejs.\n\n"
             "Tryk 'space' for at starte."
         )
@@ -497,7 +529,8 @@ def main():
         for trial in main_trials:
             current_trial_n = main_trials.thisN 
             
-            val = random.uniform(0.5,1.5)
+            # Sæt tilfældig babble-varighed
+            val = random.uniform(0.5, 1.5)
             result = run_trial(
                 win, base_dir, trial, main_trials, stimuli, rt_clock, val
             )
