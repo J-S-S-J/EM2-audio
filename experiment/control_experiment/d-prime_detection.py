@@ -43,13 +43,13 @@ import os.path
 # --- 2. Define Constants ---
 
 # Timing (in seconds)
-FIXATION_DURATION = 2.0
-ITI_DURATION = 2.0     # Inter-trial interval
+FIXATION_DURATION = 1.0
+ITI_DURATION = 1.0     # Inter-trial interval
 # BABBLE_DURATION_BEFORE_PRIMES er nu tilfældig (defineres i main loop)
 
 
 # --- Trial Counts & Stimuli Setup ---
-COMPRESSION_LEVELS = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8']
+COMPRESSION_LEVELS = ['0.3', '0.4', '0.5', '0.6', '0.7', '0.8']
 N_LEVELS = len(COMPRESSION_LEVELS)
 
 # Antal "Signal-Present" trials per niveau
