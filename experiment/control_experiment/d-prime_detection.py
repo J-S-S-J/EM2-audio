@@ -34,8 +34,8 @@ File Struktur:
 """
 
 # --- 1. Import Libraries ---
-from psychopy import prefs 
-prefs.hardware['audioLib'] = ['sounddevice', 'PTB', 'pyo', 'pygame']
+# from psychopy import prefs 
+# prefs.hardware['audioLib'] = ['sounddevice', 'PTB', 'pyo', 'pygame']
 
 from psychopy import gui, visual, core, data, event, sound, logging
 import os
