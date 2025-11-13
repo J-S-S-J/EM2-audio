@@ -34,6 +34,9 @@ File Struktur:
 """
 
 # --- 1. Import Libraries ---
+from psychopy import prefs 
+prefs.hardware['audioLib'] = ['sounddevice', 'PTB', 'pyo', 'pygame']
+
 from psychopy import gui, visual, core, data, event, sound, logging
 import os
 import random
@@ -49,15 +52,15 @@ ITI_DURATION = 1.0     # Inter-trial interval
 
 
 # --- Trial Counts & Stimuli Setup ---
-COMPRESSION_LEVELS = ['0.3', '0.4', '0.5', '0.6', '0.7', '0.8']
+COMPRESSION_LEVELS = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7']
 N_LEVELS = len(COMPRESSION_LEVELS)
 
 # Antal "Signal-Present" trials per niveau
 N_PRACTICE_REPS_PER_LEVEL = 1 # 1 'present' + 1 'absent' per niveau
-N_MAIN_REPS_PER_LEVEL = 1   # 10 'present' + 10 'absent' per niveau
+N_MAIN_REPS_PER_LEVEL = 15   # 10 'present' + 10 'absent' per niveau
 
 
-N_PRACTICE_TRIALS = N_LEVELS * N_PRACTICE_REPS_PER_LEVEL 
+N_PRACTICE_TRIALS = 3 
 # N_MAIN_TRIALS = 8 levels * 10 reps * 2 types (pres/abs) = 160
 N_MAIN_TRIALS = N_LEVELS * N_MAIN_REPS_PER_LEVEL * 2
 
@@ -68,7 +71,7 @@ NO_KEY = 'z'  # 'z' er til venstre
 VALID_KEYS = [YES_KEY, NO_KEY, QUIT_KEY]
 
 # Pauser (efter 40, 80, og 120 af de 160 main trials)
-MAIN_TRIAL_BREAK_POINTS = [] # [39, 79, 119]
+MAIN_TRIAL_BREAK_POINTS = [29, 59, 89, 119, 149]  # [39, 79, 119]
 
 
 # --- 3. Setup Functions ---
