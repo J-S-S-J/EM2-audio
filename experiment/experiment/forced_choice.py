@@ -476,8 +476,11 @@ def main():
         show_instructions(win, stimuli['instructions'], practice_instructions)
         
         for trial in practice_trials:
+            
+            val = random.uniform(0.5,1.5)
+            
             result = run_trial(
-                win, base_dir, trial, practice_trials, stimuli, rt_clock, BABBLE_DURATION_BEFORE_PRIMES
+                win, base_dir, trial, practice_trials, stimuli, rt_clock, val
             )
             
             if result == 'QUIT':
