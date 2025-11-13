@@ -494,11 +494,12 @@ def main():
             "Velkommen til træningsrunden.\n\n"
             "Du vil høre en række lyde. Nogle gange er et ord gemt i lydene,\n"
             "andre gange er der kun støj.\n\n"
-            "Din opgave er at trykke 'Ja' eller 'Nej' for, \n"
+            "De gemte ord vil være danske ord med to-tre stavelser.\n\n"
+            "Din opgave er at trykke 'Nej' eller 'Ja' for, \n"
             "om du mener, du hørte et ord.\n\n"
             f"Tryk '{NO_KEY}' for NEJ.\n"
             f"Tryk '{YES_KEY}' for JA.\n\n"
-            "Tryk 'space' for at begynde."
+            "Tryk 'mellerum' for at begynde."
         )
         show_instructions(win, stimuli['instructions'], practice_instructions)
         
