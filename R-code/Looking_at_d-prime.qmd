@@ -1,6 +1,6 @@
 ---
 title: "d-prime_analyse1"
-format: html
+format: pdf
 editor: visual
 ---
 
@@ -9,7 +9,7 @@ library(tidyverse)
 ```
 
 ```{r}
-path <- "~/Desktop/Python/EM2-audio/experiment/control_experiment/data_detection/god_data"
+path <- "~/Desktop/Python/EM2-audio/experiment/control_experiment/data_detection/ny_data"
 
 
 all_files <- fs::dir_ls(path, glob = "*.csv")
