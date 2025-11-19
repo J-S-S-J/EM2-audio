@@ -12,10 +12,14 @@ on:
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Allow the workflow to push commits
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -44,10 +48,10 @@ jobs:
       
       - name: Commit and push results
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          cd find_compression_rate
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add results/dprime_summary.txt results/dprime_results_*.csv 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "Auto-update d-prime analysis results [skip ci]"
-          git push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto-update d-prime analysis results [skip ci]"
+          file_pattern: 'find_compression_rate/results/*'
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+          skip_dirty_check: false
