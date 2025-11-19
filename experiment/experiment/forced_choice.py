@@ -134,7 +134,7 @@ def load_reusable_stimuli(win, base_dir):
     # 2. Main Prompt Text
     stimuli['prompt_text'] = visual.TextStim(
         win,
-        text="Which word do you think you heard?",
+        text="Hvilket ord tror du at du hørte?",
         height=0.06,
         color='white',
         wrapWidth=1.5,
@@ -181,7 +181,7 @@ def load_reusable_stimuli(win, base_dir):
     # 7. Inter-trial text
     stimuli['ITI_text'] =  visual.TextStim(
         win,
-        text="A new trial will begin",
+        text="Ny runde begynder...",
         height=0.05,
         color='white',
         wrapWidth=1.5
@@ -466,12 +466,12 @@ def main():
         
         # --- 4. Run Practice ---
         practice_instructions = (
-            "Welcome to the practice round.\n\n"
-            "You will hear a series of sounds. Your task is to identify \n"
-            "the word that was hidden in the sounds.\n\n"
-            "After the sounds, you will see two words on the screen.\n"
-            "Use the LEFT and RIGHT arrow keys to choose the word you heard.\n\n"
-            "Press the 'space' bar to begin."
+            "Velkommen til øvelsesrunden.\n\n"
+            "Du vil høre en række lyde. Din opgave er at identificere \n"
+            "ordet, der var skjult i lydene.\n\n"
+            "Efter lydene vil du se to ord på skærmen.\n"
+            "Brug VENSTRE og HØJRE piletaster til at vælge det ord, du hørte.\n\n"
+            "Tryk på 'mellemrum' for at begynde."
         )
         show_instructions(win, stimuli['instructions'], practice_instructions)
         
@@ -493,10 +493,10 @@ def main():
 
         # --- 5. Run Main Experiment ---
         main_instructions = (
-            "Practice complete. Now the main experiment will begin.\n\n"
-            "The task is the same.\n"
-            "Use the LEFT and RIGHT arrow keys to choose the word you heard.\n\n"
-            "Press the 'space' bar to start."
+            "Øvelsesrunden er nu færdig \n"
+            "Opgaven er den samme.\n" 
+            "Brug VENSTRE og HØJRE piletaster til at vælge det ord, du hørte.\n\n"
+            "Tryk på 'mellemrumstasten' for at starte."
         )
         show_instructions(win, stimuli['instructions'], main_instructions)
         
@@ -519,9 +519,9 @@ def main():
             
             if current_trial_n in MAIN_TRIAL_BREAK_POINTS:
                 break_message = (
-                    f"You have completed {current_trial_n + 1} of {N_MAIN_TRIALS} trials.\n\n"
-                    "Time for a short break.\n\n"
-                    "Press the 'space' bar to continue when you are ready."
+                    f"Du har nu gennemført {current_trial_n + 1} ud af {N_MAIN_TRIALS} runder.\n\n"
+                    "Hold en kort pause.\n\n"
+                    "Tryk 'mellemrum' når du er klar til at fortsætte."
                 )
                 show_instructions(win, stimuli['instructions'], break_message)
         
@@ -529,7 +529,7 @@ def main():
         if quit_experiment:
             end_message = "Data has been saved.\n\nThank you for your time."
         else:
-            end_message = "Experiment complete!\n\nThank you for your participation."
+            end_message = "Eksperiment afsluttet!\n\n tak for at deltage <3"
             
         show_instructions(win, stimuli['instructions'], end_message, wait_for_key='space')
 

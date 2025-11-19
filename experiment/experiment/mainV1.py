@@ -36,9 +36,11 @@ File Structure (ASSUMED):
 
 """
 
-# --- 1. Import Libraries ---
-from psychopy import prefs 
-prefs.hardware['audioLib'] = ['sounddevice', 'PTB', 'pyo', 'pygame']  
+# --- 1. Import Libraries --- 
+# Bemærk  skal kun bruges nogen steder
+# from psychopy import prefs 
+# prefs.hardware['audioLib'] = ['sounddevice', 'PTB', 'pyo', 'pygame']  
+
 from psychopy import gui, visual, core, data, event, sound, logging
 import os
 import random
@@ -68,7 +70,7 @@ N_NO_PRIMES = 2          # Was 35
 # (Total: 3 + 3 + 2 + 2 = 10. This matches N_TOTAL_TRIALS)
 
 # Rating keys
-RATING_KEYS = ['1', '2', '3', '4', '5', '6', '7']
+RATING_KEYS = ['1', '2', '3', '4', '5', '6', '7','8','9']
 QUIT_KEY = 'escape'
 VALID_KEYS = RATING_KEYS + [QUIT_KEY]
 
@@ -212,8 +214,8 @@ def load_reusable_stimuli(win, base_dir):
     # 4. Rating Scale Text
     stimuli['rating_text'] = visual.TextStim(
         win,
-        text="How positive or negative is the face?\n\n"
-             "1 (Very Negative) - 4 (Neutral) - 7 (Very Positive)",
+        text="Hvor positvt eller negativt vil du vurdere ansigtsudtrykket?\n\n"
+             "1 (meget negativ) - 9 (meget positiv)",
         height=0.05,
         color='white',
         wrapWidth=1.5
@@ -239,7 +241,7 @@ def load_reusable_stimuli(win, base_dir):
     # 7. Inter trial text
     stimuli['ITI-text'] =  visual.TextStim(
         win,
-        text="A new trial will begin",
+        text="Ny runde begynder",
         height=0.05,
         color='white',
         wrapWidth=1.5
@@ -566,12 +568,13 @@ def main():
         
         # --- 4. Run Practice ---
         practice_instructions = (
-            "Welcome to the practice round.\n\n"
-            "You will hear a series of sounds and then see a face.\n"
-            "Please rate how positive or negative the face is "
-            "using the 1-7 keys.\n\n"
-            "1 = Very Negative, 4 = Neutral, 7 = Very Positive\n\n"
-            "Press the 'space' bar to begin."
+            "Velkommen til øvelsesrunden\n\n"
+            "Du vil høre en række af lyde og så se et ansigt \n" 
+            "Du skal vurdere hvor positvt eller negativt ansigtsudtrykket er\n" 
+            "Ved at bruge tasterne 1-9\n\n" 
+            "1 = meget negativ, 9 = meget positiv\n" 
+            "Du bedes svare så hurtigt som muligt \n\n"
+            "Tryk 'mellemrum' for at begynde" 
         )
         show_instructions(win, stimuli['instructions'], practice_instructions)
         
@@ -606,10 +609,10 @@ def main():
 
         # --- 5. Run Main Experiment ---
         main_instructions = (
-            "Practice complete. Now the main experiment will begin.\n\n"
-            "The task is the same. Please rate each face from 1-7.\n\n"
-            "There will be short breaks during the experiment.\n\n"
-            "Press the 'space' bar to start."
+            "Øvelse færdig. Eksperimentet vil nu begynde. \n\n" 
+            "Opgaven er den samme. Vurder ansigtet fra negativ (1) til positiv (9) \n\n" 
+            "Der vil være pauser i løbet af ekseprimentet\n\n" 
+            "Tryk 'mellemrum' for at begynde" 
         )
         show_instructions(win, stimuli['instructions'], main_instructions)
         
@@ -635,9 +638,9 @@ def main():
             # Check for block breaks
             if current_trial_n in MAIN_TRIAL_BREAK_POINTS:
                 break_message = (
-                    f"You have completed {current_trial_n + 1} of {N_MAIN_TRIALS} trials.\n\n"
-                    "Time for a short break.\n\n"
-                    "Press the 'space' bar to continue when you are ready."
+                    f"Du har nu gennemført {current_trial_n + 1} ud af {N_MAIN_TRIALS} runder.\n\n"
+                    "Tid til en kort pause.\n\n"
+                    "Tryk 'mellemrum' når du er klar til at fortsætte."
                 )
                 show_instructions(win, stimuli['instructions'], break_message)
         
@@ -652,7 +655,7 @@ def main():
 
     except Exception as e:
         # Handle any other errors
-        print(f"An unexpected error occurred: {e}")
+        print(f"An unexpected error occurred Luder: {e}")
         # Log the error
         logging.error(e)
     

@@ -1,0 +1,4 @@
+﻿signal_type,compression_level,prime_file,correct_word,babbling_file,mask1_file,mask2_file,practice.thisRepN,practice.thisTrialN,practice.thisN,practice.thisIndex,main.thisRepN,main.thisTrialN,main.thisN,main.thisIndex,thisRow.t,notes,response_key,rt,trial_outcome,babble_duration,Participant ID,Session,date,
+present,0.6,ørken_compressed.wav,ørken,babble_53.wav,sollys_reversed.wav,sindssyg_reversed.wav,0,0,0,0,0,-1,-1,0,,,z,1.8678809590055607,Miss,1.1367174498909245,delete_later4,001,2025-11-19_08-13-51,
+present,0.3,misbrug_compressed.wav,misbrug,babble_28.wav,feber_reversed.wav,ketchup_reversed.wav,0,1,1,1,0,-1,-1,0,,,z,6.930092750000767,Miss,0.5517236158238357,delete_later4,001,2025-11-19_08-13-51,
+present,0.1,skammel_compressed.wav,skammel,,,,,,,,,,,,,,escape,4.873654124996392,NA,0.900589586616875,,,,

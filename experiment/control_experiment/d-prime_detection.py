@@ -60,7 +60,7 @@ N_PRACTICE_REPS_PER_LEVEL = 1 # 1 'present' + 1 'absent' per niveau
 N_MAIN_REPS_PER_LEVEL = 15   # 10 'present' + 10 'absent' per niveau
 
 
-N_PRACTICE_TRIALS = 3 
+N_PRACTICE_TRIALS = 2 
 # N_MAIN_TRIALS = 8 levels * 10 reps * 2 types (pres/abs) = 160
 N_MAIN_TRIALS = N_LEVELS * N_MAIN_REPS_PER_LEVEL * 2
 
@@ -525,7 +525,7 @@ def main():
             "Opgaven er den samme.\n"
             f"Tryk '{NO_KEY}' for NEJ, og '{YES_KEY}' for JA.\n\n"
             "Der vil være korte pauser undervejs.\n\n"
-            "Tryk 'space' for at starte."
+            "Tryk 'mellemrum' for at begynde."
         )
         show_instructions(win, stimuli['instructions'], main_instructions)
         
@@ -548,9 +548,9 @@ def main():
             # Tjek for pauser
             if current_trial_n in MAIN_TRIAL_BREAK_POINTS:
                 break_message = (
-                    f"Du har gennemført {current_trial_n + 1} ud af {N_MAIN_TRIALS} trials.\n\n"
+                    f"Du har gennemført nu {current_trial_n + 1} ud af {N_MAIN_TRIALS} runder.\n\n"
                     "Tid til en kort pause.\n\n"
-                    "Tryk 'space' for at fortsætte, når du er klar."
+                    "Tryk 'mellemrum' for at fortsætte, når du er klar."
                 )
                 show_instructions(win, stimuli['instructions'], break_message)
         
