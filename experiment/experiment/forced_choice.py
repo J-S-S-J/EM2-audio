@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ================================================================================
 PsychoPy Subliminal Audio Priming (FORCED-CHOICE CONTROL)
@@ -25,20 +23,20 @@ import os.path
 # --- 2. Define Constants (Test) ---
 
 # Timing (in seconds)
-FIXATION_DURATION = 2.0
-ITI_DURATION = 2.0     # Inter-trial interval
+FIXATION_DURATION = 1.0
+ITI_DURATION = 1.0     # Inter-trial interval
 
 
 # Trial Counts
-N_PRACTICE_TRIALS = 2    # Was 10
-N_MAIN_TRIALS = 8        # Was 200
-N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS # This now equals 10
+N_PRACTICE_TRIALS = 5   # Was 10
+N_MAIN_TRIALS = 85     # Was 200
+N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS # This now equals 120
 
 # Prime list counts - MUST SUM TO 10
 # NOTE: N_NO_PRIMES is removed, as it doesn't work for a 2AFC task.
-N_POS_PRIMES = 4         # Was 3
-N_NEG_PRIMES = 3         # Was 3
-N_NEU_PRIMES = 3         # Was 2
+N_POS_PRIMES = 30       # Was 3
+N_NEG_PRIMES = 30         # Was 3
+N_NEU_PRIMES = 30         # Was 2
 # (Total: 4 + 3 + 3 = 10. This matches N_TOTAL_TRIALS)
 
 # Rating keys
@@ -47,7 +45,7 @@ CHOICE_KEYS = ['left', 'right']
 VALID_KEYS = CHOICE_KEYS + [QUIT_KEY]
 
 # Block breaks
-MAIN_TRIAL_BREAK_POINTS = []
+MAIN_TRIAL_BREAK_POINTS = [45]
 
 
 # --- 3. Setup Functions ---

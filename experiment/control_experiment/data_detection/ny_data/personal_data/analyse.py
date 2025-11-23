@@ -14,10 +14,10 @@ from datetime import datetime
 from pathlib import Path
 
 # === Configuration ===
-DATA_DIR = "/Users/johanandersen/Desktop/Python/EM2-audio/experiment/control_experiment/data_detection/ny_data"
-OUTPUT_DIR = "results"
-OUTPUT_FILE = "new_dprime_results_{timestamp}.csv"
-SUMMARY_FILE = "new_dprime_summary.txt"
+DATA_DIR = "/Users/johanandersen/Desktop/Python/EM2-audio/experiment/control_experiment/data_detection/ny_data/personal_data"
+OUTPUT_DIR = "/Users/johanandersen/Desktop/Python/EM2-audio/experiment/control_experiment/data_detection/ny_data/personal_data"
+OUTPUT_FILE = "personal_dprime_results_{timestamp}.csv"
+SUMMARY_FILE = "dprime_summary.txt"
 
 # === Analysis Functions ===
 

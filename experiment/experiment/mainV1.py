@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ================================================================================
 PsychoPy Subliminal Audio Priming Experiment
@@ -51,22 +49,22 @@ from datetime import datetime
 # --- 2. Define Constants test ---
 
 # # Timing (in seconds)
-FIXATION_DURATION = 2.0
+FIXATION_DURATION = 1.0
 FACE_DURATION = 1.0  # 500ms
 MASK_DURATION = 0.5  # 250ms
-ITI_DURATION = 2.0     # Inter-trial interval
+ITI_DURATION = 1.0     # Inter-trial interval
 
 
 # Trial Counts
-N_PRACTICE_TRIALS = 2    # Was 10
-N_MAIN_TRIALS = 8        # Was 200
+N_PRACTICE_TRIALS = 6    # Was 10
+N_MAIN_TRIALS = 194        # Was 200
 N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS # This now equals 10
 
 # Prime list counts - MUST ALSO SUM TO 10
-N_POS_PRIMES = 3         # Was 70
-N_NEG_PRIMES = 3         # Was 70
-N_NEU_PRIMES = 2         # Was 35
-N_NO_PRIMES = 2          # Was 35
+N_POS_PRIMES = 66         # Was 70
+N_NEG_PRIMES = 66         # Was 70
+N_NEU_PRIMES = 34         # Was 35
+N_NO_PRIMES = 34         # Was 35
 # (Total: 3 + 3 + 2 + 2 = 10. This matches N_TOTAL_TRIALS)
 
 # Rating keys
@@ -77,7 +75,7 @@ VALID_KEYS = RATING_KEYS + [QUIT_KEY]
 # Block breaks (trial numbers *within the main block*)
 # The old values [49, 99, 149] are outside our 8-trial limit.
 # Set it to [] for no breaks, or [3] for a break after the 4th trial.
-MAIN_TRIAL_BREAK_POINTS = [3]
+MAIN_TRIAL_BREAK_POINTS = [49, 99, 149]
 
 
 # --- 3. Setup Functions ---
