@@ -1,3 +1,0 @@
-﻿trial_i,prime_file,prime_valence,correct_word,distractor_word,babbling_file,mask1_file,mask2_file,practice.thisRepN,practice.thisTrialN,practice.thisN,practice.thisIndex,main.thisRepN,main.thisTrialN,main.thisN,main.thisIndex,thisRow.t,notes,response_key,rt,correct_key,accuracy,left_word,right_word,Participant ID,Session,date,
-7,misbrug_compressed.wav,negative,misbrug,tønde,babble_91.wav,fremskridt_reversed.wav,ledning_reversed.wav,0,0,0,0,0,-1,-1,0,,,right,4.97040029100026,right,1,tønde,misbrug,delete,001,2025-11-18_14-23-04,
-6,spænding_compressed.wav,positive,spænding,udskud,babble_65.wav,museum_reversed.wav,enhed_reversed.wav,0,1,1,1,0,-1,-1,0,,,left,1.3475866669905372,right,0,udskud,spænding,delete,001,2025-11-18_14-23-04,
