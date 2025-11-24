@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 # === Configuration ===
-DATA_DIR = "../experiment/control_experiment/data_detection/ny_data"
+DATA_DIR = "../experiment/control_experiment/data_detection"
 OUTPUT_DIR = "./results"
 OUTPUT_FILE = "dprime_results_{timestamp}.csv"
 SUMMARY_FILE = "dprime_summary.txt"
