@@ -55,7 +55,7 @@ N_LEVELS = len(COMPRESSION_LEVELS)
 
 # Antal "Signal-Present" trials per niveau
 N_PRACTICE_REPS_PER_LEVEL = 1 # 1 'present' + 1 'absent' per niveau
-N_MAIN_REPS_PER_LEVEL = 15   # 10 'present' + 10 'absent' per niveau
+N_MAIN_REPS_PER_LEVEL = 7  # plejede at være 15, men er for mange for et kontrol forsøg
 
 
 N_PRACTICE_TRIALS = 2 
