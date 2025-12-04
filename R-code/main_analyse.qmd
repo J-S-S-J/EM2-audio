@@ -1,0 +1,256 @@
+---
+title: "analyse"
+format: html
+editor: visual
+---
+
+## Set-up
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+path <- "~/Desktop/Python/EM2-audio/R-code/combined_data.csv"
+
+raw_df <- read_delim(path) |>
+  # 1. Group by Participant so the counting restarts for every person
+  group_by(`Participant ID`) |> 
+  
+  # 2. Create the new correct trial index (1 to N)
+  mutate(trial_i = row_number()) |> 
+  
+  # 3. Ungroup so future analyses aren't restricted to one participant
+  ungroup()  
+```
+
+```{r}
+glimpse(raw_df)
+```
+
+## Box plot
+
+```{r}
+raw_df |>
+  # 1. Filter out no-prime
+  # filter(prime_valence != "no-prime") |>
+  
+  # 2. Reorder the Prime Valence so it reads logically (Neg -> Neu -> Pos)
+  mutate(prime_valence = factor(prime_valence, 
+                                levels = c("negative", "neutral", "positive", "no-prime"))) |>
+  
+  # 3. Setup the plot: Prime on X, Rating on Y
+  ggplot(aes(x = prime_valence, y = response_key, fill = prime_valence)) +
+  
+  # 4. Use Boxplots to show the median and spread of the data
+  geom_boxplot(alpha = 0.6, outlier.alpha = 0.2) +
+  
+  # 5. Add a large point to show the MEAN (average) which is often what we care about
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "white") +
+  
+  # 6. Facet by the actual expression of the face (Optional, but highly recommended)
+  facet_wrap(~facial_expression) +
+  
+  # 7. Labels and Theme
+  labs(title = "Effect of Prime Valence on Ratings",
+       subtitle = "White diamond indicates the mean rating",
+       y = "Rating (Response Key)",
+       x = "Prime Valence") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") # Nice distinct colors
+  
+```
+
+```{r}
+
+summary_stats <- raw_df |>
+  filter(prime_valence != "no-prime") |>
+  mutate(prime_valence = factor(prime_valence, levels = c("negative", "neutral", "positive"))) |> 
+  group_by(facial_expression, prime_valence) |>
+  summarise(
+    mean_rating = mean(response_key, na.rm = TRUE),
+    se = sd(response_key, na.rm = TRUE) / sqrt(n()), # Standard Error
+    .groups = "drop"
+  )
+
+```
+
+## Violin plot
+
+```{r}
+raw_df |>
+  filter(prime_valence != "no-prime", facial_expression != "Neutral") |> # Neutral is hard to define for congruency
+  # Create a Congruency Column
+  mutate(
+    congruency = case_when(
+      prime_valence == "positive" & facial_expression == "Happy" ~ "Congruent",
+      prime_valence == "negative" & facial_expression == "Angry" ~ "Congruent",
+      prime_valence == "positive" & facial_expression == "Angry" ~ "Incongruent",
+      prime_valence == "negative" & facial_expression == "Happy" ~ "Incongruent",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  filter(!is.na(congruency)) |> # Remove leftovers
+  
+  # Plotting
+  ggplot(aes(x = congruency, y = rt, fill = congruency)) +
+  # Violin shows distribution shape
+  geom_violin(alpha = 0.5, trim = FALSE) +
+  # Boxplot inside shows the median and interquartile range
+  geom_boxplot(width = 0.1, fill = "white", outlier.shape = NA) +
+  # Facet by expression to see if the effect holds for both emotions
+  facet_wrap(~facial_expression) +
+  scale_fill_manual(values = c("Congruent" = "#00BA38", "Incongruent" = "#F8766D")) +
+  coord_cartesian(ylim = c(0, 4)) + # Zoom in (ignoring extremely long RTs > 4s for clarity)
+  labs(
+    title = "Reaction Time by Congruency",
+    subtitle = "Does matching the prime to the face speed up processing?",
+    y = "Reaction Time (seconds)",
+    x = "Condition"
+  ) +
+  theme_light()
+```
+
+## Betyder styrken af ordet noget?
+
+nej
+
+```{r}
+raw_df |>
+  filter(prime_valence != "no-prime") |>
+  ggplot(aes(x = pleasure, y = response_key, color = facial_expression)) +
+  # Add 'jitter' to handle overlapping points (since rating is 1-9 integers)
+  geom_jitter(alpha = 0.1, height = 0.2, width = 0) + 
+  # Add a smoothing line (Linear Model) to see the trend
+  geom_smooth(method = "lm", se = TRUE, aes(fill = facial_expression)) +
+  labs(
+    title = "Effect of Prime Word 'Pleasure' Score on Ratings",
+    subtitle = "Do stronger positive words lead to higher ratings?",
+    x = "Word Pleasure Score (0-100)",
+    y = "Face Valence Rating",
+    color = "Target Face",
+    fill = "Target Face"
+  ) +
+  theme_minimal()
+```
+
+## Neutrale ansigter er svage
+
+**Theory:** Perhaps human evolution has made face perception so critical that it is "cognitively impenetrable." In other words, an Angry face is such a strong signal that a millisecond of the word "flower" (positive prime) cannot override it.
+
+**How to check:** If this is true, the null effect should be strongest when the face is extremely emotive ("Angry" or "Happy"), but you might see a small effect on "Neutral" faces (which are ambiguous).
+
+**Visualization:** Plot the "priming effect" (difference) specifically for Neutral vs. Strong face
+
+```{r}
+raw_df |>
+  filter(prime_valence != "no-prime") |>
+  ggplot(aes(x = prime_valence, y = response_key, fill = prime_valence)) +
+  stat_summary(fun = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +
+  # Facet by facial_expression to see if Neutral behaves differently than the strong emotions
+  facet_wrap(~facial_expression) + 
+  labs(title = "Is the Null Effect Universal?",
+       subtitle = "Check 'Neutral': If bars are flat everywhere, faces ignore words completely.",
+       y = "Mean Rating") +
+  theme_minimal() +
+  coord_cartesian(ylim = c(1, 9)) # Zoom in on the rating scale
+
+```
+
+## Differentier mellem personer måske
+
+**The "Individual Differences" Hypothesis**
+
+**Theory:** Subliminal priming is notoriously volatile. It often works on 30% of people (those with high empathy or anxiety) but fails on the other 70%. Averaging everyone together washes out the effect (Simpson's Paradox).
+
+**How to check:** Create a "Spaghetti Plot". If you see a mess of lines going up and down randomly, the effect is truly null. If you see a subset of lines consistently sloping up, you have a subgroup of "responders."
+
+```{r}
+avg_by_participant <- raw_df |>
+  filter(prime_valence %in% c("negative", "positive")) |> # Compare extremes only
+  group_by(`Participant ID`, prime_valence) |>
+  summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop")
+
+avg_by_participant |>
+  ggplot(aes(x = prime_valence, y = mean_rating, group = `Participant ID`)) +
+  # Draw a faint line for EVERY participant
+  geom_line(alpha = 0.2) + 
+  # Add the group average in Red to show the 'Null' result
+  stat_summary(aes(group = 1), fun = mean, geom = "line", color = "red", linewidth = 2) +
+  labs(title = "Individual Variability in Priming",
+       subtitle = "Grey lines = Participants. Red line = Group Average.\nIf grey lines cross like an X, the effect varies by person.",
+       y = "Mean Valence Rating") +
+  theme_minimal()
+```
+
+### NEJ: The "Habituation/Fatigue" Hypothesis
+
+**Theory:** Priming effects often exist in the first 50 trials and then vanish as the participant gets tired or develops a strategy to ignore the flashes. A null effect overall might hide a significant effect in the first 5 minutes.
+
+**How to check:** Plot the rating over time (`trial_i`).
+
+```{r}
+raw_df |>
+  filter(prime_valence != "no-prime") |>
+  ggplot(aes(x = trial_i, y = response_key, color = prime_valence)) +
+  geom_smooth(method = "loess", se = TRUE) + 
+  labs(title = "Effect of Time on Priming (Fatigue Check)",
+       subtitle = "With corrected trial numbering. Do the lines merge on the right?",
+       x = "Chronological Trial Number",
+       y = "Smoothed Rating") +
+  theme_minimal()
+```
+
+## Analysere individuelle FP
+
+```{r}
+
+# 1. Calculate the 'Priming Effect' for each participant
+participant_effect <- raw_df |>
+  filter(prime_valence %in% c("positive", "negative")) |>
+  group_by(`Participant ID`, prime_valence) |>
+  summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = prime_valence, values_from = mean_rating) |>
+  mutate(diff = positive - negative) |>
+  arrange(desc(diff)) # Sort from highest difference to lowest
+
+# 2. Extract the ID of the top participant
+top_participant_id <- participant_effect$`Participant ID`[1]
+top_diff_score <- participant_effect$diff[1]
+
+print(paste("The strongest responder is Participant:", top_participant_id))
+print(paste("Difference between Positive and Negative conditions:", round(top_diff_score, 2)))
+```
+
+```{r}
+raw_df |>
+  # Filter for the specific participant AND remove no-prime
+  filter(`Participant ID` == top_participant_id, 
+         prime_valence != "no-prime") |>
+  
+  # Reorder factors for logical plotting
+  mutate(prime_valence = factor(prime_valence, 
+                                levels = c("negative", "neutral", "positive"))) |>
+  
+  # Plot
+  ggplot(aes(x = prime_valence, y = response_key, fill = prime_valence)) +
+  
+  # Boxplot with transparency
+  geom_boxplot(alpha = 0.6, outlier.alpha = 0.2) +
+  
+  # Add the MEAN point (White Diamond)
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 4, fill = "white", stroke = 1.5) +
+  
+  # Facet by facial expression
+  facet_wrap(~facial_expression) +
+  
+  # Custom Labels including the specific ID
+  labs(title = paste("Data for Best Responder:", top_participant_id),
+       subtitle = paste("This participant showed a valence shift of", round(top_diff_score, 2), "points."),
+       y = "Rating (Response Key)",
+       x = "Prime Valence") +
+  
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2")
+```
