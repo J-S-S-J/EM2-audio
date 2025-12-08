@@ -8,6 +8,7 @@ editor: visual
 
 ```{r}
 library(tidyverse)
+library(rstatix)
 ```
 
 ```{r}
@@ -21,11 +22,11 @@ raw_df <- read_delim(path) |>
   mutate(trial_i = row_number()) |> 
   
   # 3. Ungroup so future analyses aren't restricted to one participant
-  ungroup()  
+  ungroup()  |>
+  rename(ID = `Participant ID`)
 ```
 
 ```{r}
-glimpse(raw_df)
 ```
 
 ## Box plot
@@ -59,6 +60,20 @@ raw_df |>
   theme_minimal() +
   scale_fill_brewer(palette = "Set2") # Nice distinct colors
   
+```
+
+### ANOVA
+
+```{r}
+priming_effects_anova <- raw_df |> 
+  anova_test(
+  dv = response_key,
+  wid = 
+  within = prime_valence,
+
+  effect.size = "ges",
+)
+get_anova_table(priming_effects_anova)
 ```
 
 ```{r}
