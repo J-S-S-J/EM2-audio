@@ -8,25 +8,21 @@ editor: visual
 
 ```{r}
 library(tidyverse)
-library(rstatix)
+library(rstatix) # for ANOVA
+library(lme4)
+library(lmerTest)
 ```
 
 ```{r}
 path <- "~/Desktop/Python/EM2-audio/R-code/combined_data.csv"
 
 raw_df <- read_delim(path) |>
-  # 1. Group by Participant so the counting restarts for every person
   group_by(`Participant ID`) |> 
-  
-  # 2. Create the new correct trial index (1 to N)
-  mutate(trial_i = row_number()) |> 
-  
-  # 3. Ungroup so future analyses aren't restricted to one participant
-  ungroup()  |>
-  rename(ID = `Participant ID`)
-```
-
-```{r}
+  mutate(trial_i = row_number()) |> ungroup()  |>
+  rename(ID = `Participant ID`) |>
+  relocate(ID, .before = trial_i) |>
+  filter(main.thisN >= 0) |> # remove pratice trial
+  filter(rt < 2) # must be quicker than 2 sec
 ```
 
 ## Box plot
@@ -65,15 +61,128 @@ raw_df |>
 ### ANOVA
 
 ```{r}
-priming_effects_anova <- raw_df |> 
-  anova_test(
-  dv = response_key,
-  wid = 
-  within = prime_valence,
+# 1. Aggregate: Calculate mean rating per participant per condition
+anova_data <- raw_df |>
+  filter(prime_valence != "no-prime") |>
+  group_by(ID, prime_valence, facial_expression) |>
+  summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop")
 
-  effect.size = "ges",
-)
+# 2. Run the ANOVA on this aggregated data
+priming_effects_anova <- anova_data |> 
+  anova_test(
+    dv = mean_rating,       # Use the aggregated mean
+    wid = ID,               # Participant ID
+    within = c(prime_valence, facial_expression),
+    effect.size = "ges"
+  )
+
+# 3. View Results
 get_anova_table(priming_effects_anova)
+```
+
+```{r}
+pwc_data <- raw_df |>
+  filter(prime_valence != "no-prime") |>
+  group_by(ID, facial_expression, prime_valence) |>
+  summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop")
+
+# 2. RUN TEST: Now run the pairwise test on the aggregated data
+pwc <- pwc_data |>
+  group_by(facial_expression) |> # We still want to see the effect for each face type
+  pairwise_t_test(
+    mean_rating ~ prime_valence,   # Note: use 'mean_rating' here, not response_key
+    paired = TRUE,
+    p.adjust.method = "bonferroni"
+  )
+
+# 3. VIEW RESULTS
+pwc |> select(facial_expression, group1, group2, p.adj, p.adj.signif)
+```
+
+### Sammen LMM
+
+```{r}
+means_table <- raw_df |>
+  group_by(facial_expression, prime_valence) |>
+  summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop") |>
+  
+  # 4. Spread it out: Make 'prime_valence' the columns
+  pivot_wider(names_from = prime_valence, values_from = mean_rating)
+
+# View the result
+print(means_table)
+```
+
+```{r}
+model_power <- lmer(response_key ~ scale(pleasure) * facial_expression + 
+                      scale(true_face_valence) +  # <--- The new control variable
+                      (1 | ID) + 
+                      (1 | face_file), 
+                    data = raw_df)
+
+summary(model_power)
+```
+
+```{r}
+
+model_lmm <- lmer(response_key ~ pleasure  + 
+                    (1 | ID) +          # Random intercept for Participants
+                    (1 | face_file),      # Random intercept for specific Face items
+                  data = raw_df)
+
+# Get the results with p-values
+summary(model_lmm)
+```
+
+### Opdelt LMM
+
+```{r}
+model_lmm <- lmer(response_key ~ pleasure * facial_expression + 
+                    (1 | ID) +            # Random intercept for Participants
+                    (1 | face_file),      # Random intercept for specific Face items
+                  data = raw_df)
+
+# Get the results with p-values
+summary(model_lmm)
+```
+
+#### How to Read the Output (`summary(model_lmm)`)
+
+Look at the **Fixed Effects** section:
+
+1.  **`(Intercept)`**: The average rating when pleasure is average and face is the reference category (likely "Angry").
+
+2.  **`scale(pleasure)`**: This is your **Hypothesis 1**.
+
+    -   If **Estimate is Positive** (e.g., `0.15`) and **Pr(\>\|t\|) \< 0.05**: It means as the prime word gets more pleasant, the face rating significantly goes UP.
+
+3.  **`facial_expressionHappy`**: Just confirms Happy faces are rated higher than Angry ones.
+
+4.  **`scale(pleasure):facial_expressionHappy`** (Interaction):
+
+    -   If significant, it means the priming effect works **differently** for Happy faces compared to Angry/Neutral ones.
+
+```{r}
+raw_df |>
+  filter(prime_valence != "no-prime") |> # Optional: keep or remove 'no-prime'
+  ggplot(aes(x = pleasure, y = response_key, color = facial_expression)) +
+  
+  # 1. Add the raw data points (jittered so they don't overlap)
+  geom_jitter(alpha = 0.1, height = 0.2, width = 0) + 
+  
+  # 2. Add the Linear Trend Lines
+  geom_smooth(method = "lm", se = TRUE, aes(fill = facial_expression)) +
+  
+  # 3. Aesthetics
+  scale_color_brewer(palette = "Set1") +
+  scale_fill_brewer(palette = "Set1") +
+  labs(title = "LMM Result Visualization",
+       subtitle = "Does the continuous 'Pleasure' score of the prime predict Face Rating?",
+       x = "Prime Word Pleasure Score (0-100)",
+       y = "Face Rating (1-9)",
+       color = "Face Type",
+       fill = "Face Type") +
+  theme_minimal()
 ```
 
 ```{r}
@@ -184,11 +293,11 @@ raw_df |>
 ```{r}
 avg_by_participant <- raw_df |>
   filter(prime_valence %in% c("negative", "positive")) |> # Compare extremes only
-  group_by(`Participant ID`, prime_valence) |>
+  group_by(ID, prime_valence) |>
   summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop")
 
 avg_by_participant |>
-  ggplot(aes(x = prime_valence, y = mean_rating, group = `Participant ID`)) +
+  ggplot(aes(x = prime_valence, y = mean_rating, group = ID)) +
   # Draw a faint line for EVERY participant
   geom_line(alpha = 0.2) + 
   # Add the group average in Red to show the 'Null' result
@@ -268,4 +377,10 @@ raw_df |>
   
   theme_minimal() +
   scale_fill_brewer(palette = "Set2")
+```
+
+# Bayes
+
+```{r}
+library(brms)
 ```
