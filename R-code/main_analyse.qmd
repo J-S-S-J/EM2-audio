@@ -333,14 +333,14 @@ raw_df |>
 # 1. Calculate the 'Priming Effect' for each participant
 participant_effect <- raw_df |>
   filter(prime_valence %in% c("positive", "negative")) |>
-  group_by(`Participant ID`, prime_valence) |>
+  group_by(ID, prime_valence) |>
   summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop") |>
   pivot_wider(names_from = prime_valence, values_from = mean_rating) |>
   mutate(diff = positive - negative) |>
   arrange(desc(diff)) # Sort from highest difference to lowest
 
 # 2. Extract the ID of the top participant
-top_participant_id <- participant_effect$`Participant ID`[1]
+top_participant_id <- participant_effect$ID[1]
 top_diff_score <- participant_effect$diff[1]
 
 print(paste("The strongest responder is Participant:", top_participant_id))
@@ -350,7 +350,7 @@ print(paste("Difference between Positive and Negative conditions:", round(top_di
 ```{r}
 raw_df |>
   # Filter for the specific participant AND remove no-prime
-  filter(`Participant ID` == top_participant_id, 
+  filter(ID == top_participant_id, 
          prime_valence != "no-prime") |>
   
   # Reorder factors for logical plotting
@@ -382,5 +382,105 @@ raw_df |>
 # Bayes
 
 ```{r}
-library(brms)
+library(BayesFactor)
 ```
+
+```{r}
+
+
+# 1. Aggregate and Convert to Factors (Crucial Step!)
+bf_data <- raw_df |>
+  filter(prime_valence != "no-prime") |> # Ensure you don't have unwanted levels
+  group_by(ID, prime_valence, facial_expression) |>
+  summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop") |>
+  # FIX: Convert all grouping columns to Factors
+  mutate(
+    ID = as.factor(ID),
+    prime_valence = as.factor(prime_valence),
+    facial_expression = as.factor(facial_expression)
+  ) |>
+  as.data.frame() # FIX: BayesFactor sometimes dislikes tibbles
+
+# 2. Run the Repeated Measures BANOVA
+# Note: The formula MUST include the ID variable
+bf_model <- anovaBF(
+  mean_rating ~ prime_valence * facial_expression + ID,
+  data = bf_data, 
+  whichRandom = "ID",
+  progress = FALSE # Optional: hides the progress bar
+)
+
+# 3. View Results
+print(bf_model)
+
+```
+
+The output you provided is a comparison of four different models against a **Null Model** (which only assumes that ratings vary by participant, `ID`).
+
+Here is the breakdown of what each line means and the scientific conclusion you can draw.
+
+### 1. The "Headline" Numbers
+
+The numbers on the right are **Bayes Factors (**$BF_{10}$). They tell you how much more likely the data is under that specific model compared to the baseline Null Model.
+
+-   **Model \[1\] (`prime_valence`):** $BF \approx 0.08$
+
+-   **Model \[2\] (`facial_expression`):** $BF \approx 2.8 \times 10^{60}$ (Huge!)
+
+-   **Model \[3\] (`prime + face`):** $BF \approx 3.3 \times 10^{59}$ (Huge, but less than \[2\])
+
+-   **Model \[4\] (`interaction`):** $BF \approx 2.6 \times 10^{58}$ (Huge, but lowest of the big ones)
+
+------------------------------------------------------------------------
+
+### 2. Interpretation of Specific Hypotheses
+
+#### **Hypothesis 1: Does the Prime work? (Model 1 vs Null)**
+
+Look at **Line \[1\]**.
+
+-   **Result:** 0.078
+
+-   **Meaning:** This is less than 1, which means the **Null Hypothesis is better**.
+
+-   **Calculation:** $1 / 0.078 \approx 12.8$.
+
+-   **Conclusion:** The data is **\~13 times more likely** under the Null Hypothesis (no priming effect) than under the Priming Hypothesis.
+
+-   **Scientific Statement:** "We found strong evidence against the priming effect ($BF_{01} = 12.8$)."
+
+#### **Validation Check: Did they see the Faces? (Model 2 vs Null)**
+
+Look at **Line \[2\]**.
+
+-   **Result:** $2.8 \times 10^{60}$
+
+-   **Meaning:** This number is astronomically high.
+
+-   **Conclusion:** There is **decisive evidence** that Facial Expression affects ratings. This just confirms your task worked: people rated Happy faces higher than Angry faces.
+
+#### **The Critical Test: Does adding the Prime help? (Model 3 vs Model 2)**
+
+This is the most important comparison. You want to know if adding `prime_valence` to a model that already knows about `facial_expression` improves it.
+
+-   **Model 2 (Face only):** $2.8 \times 10^{60}$
+
+-   **Model 3 (Face + Prime):** $3.3 \times 10^{59}$
+
+Notice that **Model 2 is higher** than Model 3 (by factor of about 10).
+
+-   **Meaning:** The simpler model (Face Only) is better than the complex model (Face + Prime). The Prime variable is just "dead weight"—it adds complexity without explaining any new variance.
+
+------------------------------------------------------------------------
+
+### Summary for your Report
+
+You can report this analysis as a "Bayesian Model Comparison."
+
+> "A Bayesian repeated-measures ANOVA revealed **decisive evidence for the effect of Facial Expression** ($BF_{10} > 100$)^1^, validating that participants perceived the emotional content of the targets.
+>
+> However, regarding the subliminal prime, the analysis provided **moderate-to-strong evidence against the priming hypothesis**. The model containing only Facial Expression was preferred over the model containing both Prime and Face by a factor of approximately 8.5 ($BF_{23} \approx 8.5$).
+>
+> Furthermore, a direct comparison of the Prime-only model against the Null model yielded a Bayes Factor of $BF_{10} = 0.08$, indicating that the Null hypothesis is roughly 12.8 times more likely than the hypothesis that the prime influenced ratings."
+
+**Next Step:** Would you like to create a "Bayes Factor Robustness Plot" (like the curve in your lecture slides on page 44 ^2^) to show that this null result holds true regardless of the prior you choose?
