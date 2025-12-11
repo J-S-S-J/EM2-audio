@@ -8,13 +8,21 @@ editor: visual
 
 ```{r}
 library(tidyverse)
+
 library(rstatix) # for ANOVA
 library(lme4)
 library(lmerTest)
+
+library(BayesFactor)
+
+
+library(ggthemes)
+library(extrafont)
+
 ```
 
 ```{r}
-path <- "~/Desktop/Python/EM2-audio/R-code/combined_data.csv"
+path <- "~/Desktop/Python/EM2-audio/R-code/combined_data copy.csv"
 
 raw_df <- read_delim(path) |>
   group_by(`Participant ID`) |> 
@@ -23,12 +31,22 @@ raw_df <- read_delim(path) |>
   relocate(ID, .before = trial_i) |>
   filter(main.thisN >= 0) |> # remove pratice trial
   filter(rt < 2) # must be quicker than 2 sec
+
+raw_df |> summarise_all(n_distinct)
+
+
 ```
+
+```{r}
+print(sort(unique(raw_df$ID)))
+```
+
+# Main findings
 
 ## Box plot
 
 ```{r}
-raw_df |>
+boxplot_fig <- raw_df |>
   # 1. Filter out no-prime
   # filter(prime_valence != "no-prime") |>
   
@@ -50,15 +68,38 @@ raw_df |>
   
   # 7. Labels and Theme
   labs(title = "Effect of Prime Valence on Ratings",
-       subtitle = "White diamond indicates the mean rating",
+       subtitle = "White diamond indicates the mean rating (N = 18)",
        y = "Rating (Response Key)",
        x = "Prime Valence") +
-  theme_minimal() +
-  scale_fill_brewer(palette = "Set2") # Nice distinct colors
+  theme_fivethirtyeight() +
+  scale_fill_brewer(palette = "Set1")  +
+  theme(
+    axis.title = element_text(),
+    axis.text.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "bottom",
+    legend.background = element_rect(fill = "white", color = NA),
+    text = element_text(family = "IBM Plex Mono"),
+    plot.title = element_text(size = 12)
+  ) 
+
+boxplot_fig
+
+ggsave(
+  filename = "box-plot-main-results.png",
+  plot = boxplot_fig,
+  width = 8,  # Specify width in inches
+  height = 5, # Specify height in inches
+  units = "in" # Specify units
+)
+
+
+
   
 ```
 
-### ANOVA
+## ANOVA
 
 ```{r}
 # 1. Aggregate: Calculate mean rating per participant per condition
@@ -99,7 +140,9 @@ pwc <- pwc_data |>
 pwc |> select(facial_expression, group1, group2, p.adj, p.adj.signif)
 ```
 
-### Sammen LMM
+## LMM
+
+### LMM 1 fixed effect
 
 ```{r}
 means_table <- raw_df |>
@@ -114,16 +157,6 @@ print(means_table)
 ```
 
 ```{r}
-model_power <- lmer(response_key ~ scale(pleasure) * facial_expression + 
-                      scale(true_face_valence) +  # <--- The new control variable
-                      (1 | ID) + 
-                      (1 | face_file), 
-                    data = raw_df)
-
-summary(model_power)
-```
-
-```{r}
 
 model_lmm <- lmer(response_key ~ pleasure  + 
                     (1 | ID) +          # Random intercept for Participants
@@ -134,7 +167,7 @@ model_lmm <- lmer(response_key ~ pleasure  +
 summary(model_lmm)
 ```
 
-### Opdelt LMM
+### LMM 2 fixed effects
 
 ```{r}
 model_lmm <- lmer(response_key ~ pleasure * facial_expression + 
@@ -162,8 +195,10 @@ Look at the **Fixed Effects** section:
 
     -   If significant, it means the priming effect works **differently** for Happy faces compared to Angry/Neutral ones.
 
+## Contentious pleasure scores fig
+
 ```{r}
-raw_df |>
+pleasure_score_fig <- raw_df |>
   filter(prime_valence != "no-prime") |> # Optional: keep or remove 'no-prime'
   ggplot(aes(x = pleasure, y = response_key, color = facial_expression)) +
   
@@ -176,13 +211,35 @@ raw_df |>
   # 3. Aesthetics
   scale_color_brewer(palette = "Set1") +
   scale_fill_brewer(palette = "Set1") +
-  labs(title = "LMM Result Visualization",
-       subtitle = "Does the continuous 'Pleasure' score of the prime predict Face Rating?",
+  labs(title = "Effects of pleasure on face rating",
+       subtitle = "Does the continuous score of the prime predict Face Rating? (N = 18)",
        x = "Prime Word Pleasure Score (0-100)",
        y = "Face Rating (1-9)",
        color = "Face Type",
        fill = "Face Type") +
-  theme_minimal()
+  scale_fill_brewer(palette = "Set1")  +
+  theme_fivethirtyeight() +
+  theme(
+    axis.title = element_text(),
+    # panel.grid.major.x = element_blank(),
+    # panel.grid.minor.x = element_blank(),
+    legend.position = "bottom",
+    legend.background = element_rect(fill = "white", color = NA),
+    text = element_text(family = "IBM Plex Mono"),
+    plot.title = element_text(size = 12)
+  ) 
+
+pleasure_score_fig
+
+ggsave(
+  filename = "pleasure_score_fig.png",
+  plot = pleasure_score_fig,
+  width = 8,  # Specify width in inches
+  height = 5, # Specify height in inches
+  units = "in" # Specify units
+)
+
+
 ```
 
 ```{r}
@@ -199,10 +256,12 @@ summary_stats <- raw_df |>
 
 ```
 
+# RT
+
 ## Violin plot
 
 ```{r}
-raw_df |>
+violin_rt_fig <- raw_df |>
   filter(prime_valence != "no-prime", facial_expression != "Neutral") |> # Neutral is hard to define for congruency
   # Create a Congruency Column
   mutate(
@@ -228,35 +287,106 @@ raw_df |>
   coord_cartesian(ylim = c(0, 4)) + # Zoom in (ignoring extremely long RTs > 4s for clarity)
   labs(
     title = "Reaction Time by Congruency",
-    subtitle = "Does matching the prime to the face speed up processing?",
+    subtitle = "Does matching the prime to the face speed up processing? (N = 18)",
     y = "Reaction Time (seconds)",
     x = "Condition"
   ) +
-  theme_light()
+    scale_fill_brewer(palette = "Set1")  +
+  theme_fivethirtyeight() +
+  theme(
+    axis.title = element_text(),
+    axis.text.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "bottom",
+    legend.background = element_rect(fill = "white", color = NA),
+    text = element_text(family = "IBM Plex Mono"),
+    plot.title = element_text(size = 12)
+  ) 
+
+violin_rt_fig
+
+ggsave(
+  filename = "violin-rt-fig.png",
+  plot = violin_rt_fig,
+  width = 8,  # Specify width in inches
+  height = 5, # Specify height in inches
+  units = "in" # Specify units
+)
+  
+
+  
 ```
 
-## Betyder styrken af ordet noget?
-
-nej
+## Banova
 
 ```{r}
-raw_df |>
-  filter(prime_valence != "no-prime") |>
-  ggplot(aes(x = pleasure, y = response_key, color = facial_expression)) +
-  # Add 'jitter' to handle overlapping points (since rating is 1-9 integers)
-  geom_jitter(alpha = 0.1, height = 0.2, width = 0) + 
-  # Add a smoothing line (Linear Model) to see the trend
-  geom_smooth(method = "lm", se = TRUE, aes(fill = facial_expression)) +
-  labs(
-    title = "Effect of Prime Word 'Pleasure' Score on Ratings",
-    subtitle = "Do stronger positive words lead to higher ratings?",
-    x = "Word Pleasure Score (0-100)",
-    y = "Face Valence Rating",
-    color = "Target Face",
-    fill = "Target Face"
-  ) +
-  theme_minimal()
+# 1. Prepare Data (Exact same logic as your plot)
+rt_bayes_data <- raw_df |>
+  filter(prime_valence != "no-prime", facial_expression != "Neutral") |>
+  mutate(
+    congruency = case_when(
+      prime_valence == "positive" & facial_expression == "Happy" ~ "Congruent",
+      prime_valence == "negative" & facial_expression == "Angry" ~ "Congruent",
+      prime_valence == "positive" & facial_expression == "Angry" ~ "Incongruent",
+      prime_valence == "negative" & facial_expression == "Happy" ~ "Incongruent",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  filter(!is.na(congruency)) |>
+  
+  # 2. AGGREGATE: Calculate mean RT per Participant per Condition
+  # This is crucial for repeated measures ANOVA
+  group_by(ID, congruency) |>
+  summarise(mean_rt = mean(rt, na.rm = TRUE), .groups = "drop") |>
+  
+  # 3. Convert grouping variables to Factors (Required by BayesFactor)
+  mutate(
+    ID = as.factor(ID),
+    congruency = as.factor(congruency)
+  ) |>
+  as.data.frame() # BayesFactor prefers data.frames over tibbles
+
+
 ```
+
+```{r}
+# Run the Bayesian Repeated Measures ANOVA
+rt_bf_model <- anovaBF(
+  mean_rt ~ congruency + ID,  # Formula: RT predicted by Congruency + Subject ID
+  data = rt_bayes_data, 
+  whichRandom = "ID",         # Specify that ID is a random effect (repeated measures)
+  progress = FALSE
+)
+
+print(rt_bf_model)
+```
+
+**1. The Result (**BF10​≈0.38**)**
+
+The Bayes Factor is **0.335**
+
+-   Because this number is **less than 1**, the evidence favors the **Null Hypothesis** (H0​).
+
+-   It means the data is *less* likely to occur under your Congruency hypothesis than under the Null hypothesis.
+
+**2. Strength of Evidence ("Anecdotal")**
+
+To understand *how* strong this evidence is, we usually invert the number to see the support for the Null (BF01​):
+
+BF01​=1/0.335 = 2,985
+
+-   **Interpretation:** The data is about **2.66 times more likely** under the Null Hypothesis (no effect) than the Alternative.
+
+**Scientific Conclusion**
+
+Unlike your previous analysis (which found strong evidence against the Prime Valence effect), this result is **inconclusive**.
+
+-   The data leans slightly against there being a Congruency effect, but the evidence is **too weak** to be confident.
+
+-   You cannot claim "there is no congruency effect" (you would need a BF01​\>3 for "Moderate" evidence). You can only state that you **failed to find evidence for it**.
+
+# Andre analyser
 
 ## Neutrale ansigter er svage
 
@@ -296,40 +426,38 @@ avg_by_participant <- raw_df |>
   group_by(ID, prime_valence) |>
   summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop")
 
-avg_by_participant |>
+all_individual_fig <- avg_by_participant |>
   ggplot(aes(x = prime_valence, y = mean_rating, group = ID)) +
   # Draw a faint line for EVERY participant
   geom_line(alpha = 0.2) + 
   # Add the group average in Red to show the 'Null' result
   stat_summary(aes(group = 1), fun = mean, geom = "line", color = "red", linewidth = 2) +
   labs(title = "Individual Variability in Priming",
-       subtitle = "Grey lines = Participants. Red line = Group Average.\nIf grey lines cross like an X, the effect varies by person.",
-       y = "Mean Valence Rating") +
-  theme_minimal()
+       subtitle = "Grey lines = Participants. Red line = Group Average (N = 18)",
+       y = "Mean Valence Rating") 
+  theme_fivethirtyeight() +
+  theme(
+    legend.position = "bottom",
+    legend.background = element_rect(fill = "white", color = NA),
+    text = element_text(family = "IBM Plex Mono"),
+    plot.title = element_text(size = 12)
+  ) 
+
+all_individual_fig
+
+ggsave(
+  filename = "all_individual_fig.png",
+  plot = all_individual_fig,
+  width = 8,  # Specify width in inches
+  height = 5, # Specify height in inches
+  units = "in" # Specify units
+)
+
+raw_df |> summarise_all(n_distinct)
+  
 ```
 
-### NEJ: The "Habituation/Fatigue" Hypothesis
-
-**Theory:** Priming effects often exist in the first 50 trials and then vanish as the participant gets tired or develops a strategy to ignore the flashes. A null effect overall might hide a significant effect in the first 5 minutes.
-
-**How to check:** Plot the rating over time (`trial_i`).
-
 ```{r}
-raw_df |>
-  filter(prime_valence != "no-prime") |>
-  ggplot(aes(x = trial_i, y = response_key, color = prime_valence)) +
-  geom_smooth(method = "loess", se = TRUE) + 
-  labs(title = "Effect of Time on Priming (Fatigue Check)",
-       subtitle = "With corrected trial numbering. Do the lines merge on the right?",
-       x = "Chronological Trial Number",
-       y = "Smoothed Rating") +
-  theme_minimal()
-```
-
-## Analysere individuelle FP
-
-```{r}
-
 # 1. Calculate the 'Priming Effect' for each participant
 participant_effect <- raw_df |>
   filter(prime_valence %in% c("positive", "negative")) |>
@@ -348,7 +476,7 @@ print(paste("Difference between Positive and Negative conditions:", round(top_di
 ```
 
 ```{r}
-raw_df |>
+individual_box_fig <- raw_df |>
   # Filter for the specific participant AND remove no-prime
   filter(ID == top_participant_id, 
          prime_valence != "no-prime") |>
@@ -370,25 +498,54 @@ raw_df |>
   facet_wrap(~facial_expression) +
   
   # Custom Labels including the specific ID
-  labs(title = paste("Data for Best Responder:", top_participant_id),
-       subtitle = paste("This participant showed a valence shift of", round(top_diff_score, 2), "points."),
+  labs(title = "Data for Best Responder",
        y = "Rating (Response Key)",
        x = "Prime Valence") +
+  theme_fivethirtyeight() +
+  scale_fill_brewer(palette = "Set1")  +
+  theme(
+    axis.title = element_text(),
+    axis.text.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "bottom",
+    legend.background = element_rect(fill = "white", color = NA),
+    text = element_text(family = "IBM Plex Mono"),
+    plot.title = element_text(size = 12)
+  ) 
+
+individual_box_fig
+
+ggsave(
+  filename = "individual_box_fig.png",
+  plot = individual_box_fig,
+  width = 8,  # Specify width in inches
+  height = 5, # Specify height in inches
+  units = "in" # Specify units
+)
+
+
   
-  theme_minimal() +
-  scale_fill_brewer(palette = "Set2")
 ```
 
-# Bayes
+## Habituering
 
 ```{r}
-library(BayesFactor)
+raw_df |>
+  filter(prime_valence != "no-prime") |>
+  ggplot(aes(x = trial_i, y = response_key, color = prime_valence)) +
+  geom_smooth(method = "loess", se = TRUE) + 
+  labs(title = "Effect of Time on Priming (Fatigue Check)",
+       subtitle = "With corrected trial numbering. Do the lines merge on the right?",
+       x = "Chronological Trial Number",
+       y = "Smoothed Rating") +
+  theme_minimal()
 ```
 
+# Bayes for main
+
 ```{r}
 
-
-# 1. Aggregate and Convert to Factors (Crucial Step!)
 bf_data <- raw_df |>
   filter(prime_valence != "no-prime") |> # Ensure you don't have unwanted levels
   group_by(ID, prime_valence, facial_expression) |>

@@ -11,6 +11,9 @@ library(tidyverse)
 library(rstatix) # for ANOVA
 library(lme4) # for LMM
 library(lmerTest)
+
+library(ggthemes)
+library(extrafont)
 ```
 
 ```{r}
@@ -34,7 +37,7 @@ d_prime_df <- read_delim(d_prime_path) |>
   relocate(trial_i, ID, .before = signal_type) |>
   filter(main.thisTrialN >= 0) |> # remove pratice trial
   filter(rt < 2) |> # must be quicker than 2 sec 
-  filter(compression_level == 0.4)
+  filter(compression_level == 0.5)
 
 
 ```
@@ -60,37 +63,65 @@ print(group_summary)
 ```
 
 ```{r}
-forced_choice_df |>
-  # 1. Calculate total accuracy per person (ignoring valence this time)
+forced_choice_fig <- forced_choice_df |>
+  # 1. Calculate stats
   group_by(ID) |>
   summarise(
     total_acc = mean(accuracy, na.rm = TRUE),
-    # Calculate a simple standard error for the error bars
     se = sd(accuracy, na.rm = TRUE) / sqrt(n()) 
   ) |>
-  # 2. Reorder ID by Accuracy (lowest to highest)
+  # 2. Reorder ID
   mutate(ID = fct_reorder(ID, total_acc)) |>
   
   # 3. Plot
   ggplot(aes(x = ID, y = total_acc)) +
   
-  # Chance line
-  geom_hline(yintercept = 0.5, color = "red", linetype = "dashed") +
+  # FIX A: Use geom_hline for the "Chance Line", not histogram
+  geom_hline(yintercept = 0.5, color = "red", linetype = "dashed", size = 1) +
   
-  # Error bars (Confidence interval approximation)
+  # Error bars
   geom_errorbar(aes(ymin = total_acc - se, ymax = total_acc + se), width = 0.2) +
   
   # Points
   geom_point(size = 3, color = "steelblue") +
   
   # Labels
-  labs(title = "Individual Visibility Check",
-       subtitle = "Participants distinct from the red line (0.5) might be aware of the prime.",
+  labs(title = "Forced choice accuracy",
+       subtitle = "Red line (0.5) indicates random choice",
        y = "Mean Accuracy",
        x = "Participant ID") +
   
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate IDs to read them
+  theme_fivethirtyeight() +
+  
+  # FIX B: Cleaned up theme syntax (removed nested theme call)
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "none", # No legend needed
+    text = element_text(family = "IBM Plex Mono"), 
+    plot.title = element_text(size = 12),
+    # FIX C: Show X axis text (rotated) so you can see who is who
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9) 
+  ) 
+
+# Display plot
+print(forced_choice_fig)
+
+# Save plot
+ggsave(
+  filename = "forced_choice_fig.png",
+  plot = forced_choice_fig,
+  width = 8, 
+  height = 5,
+  units = "in"
+)
+```
+
+```{r}
+stat_test1 <- forced_choice_df |>
+  t_test(accuracy ~ 1, mu = 0.5, alternative = "greater")
+
+stat_test1
 ```
 
 ## d-prime after result
@@ -137,11 +168,78 @@ simple_accuracy |>
 ```
 
 ```{r}
+detection_task_fig <- d_prime_df |>
+  # FIX 1: Convert ID to a factor immediately so fct_reorder works later
+  mutate(ID = as.factor(ID)) |> 
+  
+  # 1. Calculate accuracy and Standard Error per participant
+  group_by(ID) |>
+  summarise(
+    n_trials = n(),
+    n_correct = sum(trial_outcome %in% c("Hit", "Correct Rejection")),
+    accuracy = n_correct / n_trials,
+    # Calculate SE for proportion
+    se = sqrt((accuracy * (1 - accuracy)) / n_trials)
+  ) |>
+  
+  # 2. Reorder ID by Accuracy (lowest to highest)
+  mutate(ID = fct_reorder(ID, accuracy)) |>
+  
+  # 3. Plot
+  ggplot(aes(x = ID, y = accuracy)) +
+  
+  # Chance line (50%)
+  geom_hline(yintercept = 0.5, color = "red", linetype = "dashed", size = 1) +
+  
+  # Error bars
+  geom_errorbar(aes(ymin = accuracy - se, ymax = accuracy + se), width = 0.2) +
+  
+  # Points
+  geom_point(size = 3, color = "steelblue") +
+  
+  # Labels
+  labs(title = "Detection Task Accuracy",
+       subtitle = "Red line (0.5) indicates random choice",
+       y = "Percent Correct (Hits + Correct Rejections)",
+       x = "Participant ID") +
+  
+  # Formatting
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  theme_fivethirtyeight() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = "none",
+    text = element_text(family = "IBM Plex Mono"),
+    plot.title = element_text(size = 12),
+    # Rotate x-axis labels so IDs are readable
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9)
+  )
+
+# Display plot
+print(detection_task_fig)
+
+# Save plot
+ggsave(
+  filename = "detection_task_fig.png",
+  plot = detection_task_fig,
+  width = 8, 
+  height = 5,
+  units = "in"
+)
+```
+
+```{r}
 # One-sample t-test against 0.5
 stat_test <- simple_accuracy |>
-  t_test(accuracy ~ 1, mu = 0.5, alternative = "greater")
+  t_test(accuracy ~ 1, mu = 0.5, alternative = "greater", )
+
+effect_size <- simple_accuracy |> 
+  cohens_d(accuracy ~ 1, mu = 0.5)
+
 
 stat_test
+effect_size
 ```
 
 **How to read the result:**
@@ -230,7 +328,7 @@ print(test_result)
 -   If **p \> 0.05**, the group was effectively **deaf** to the primes (ideal for a subliminal experiment)
 
 ```{r}
-sdt_stats <- d_prime_before |>
+sdt_stats <- d_prime_df |>
   group_by(ID, compression_level) |>
   summarise(
     # Count specific outcomes
