@@ -49,7 +49,6 @@ participant_acc <- forced_choice_df |>
   group_by(ID, prime_valence) |>
   summarise(mean_acc = mean(accuracy, na.rm = TRUE), .groups = "drop")
 
-# 2. Calculate Group Averages
 group_summary <- participant_acc |>
   group_by(prime_valence) |>
   summarise(
@@ -64,28 +63,16 @@ print(group_summary)
 
 ```{r}
 forced_choice_fig <- forced_choice_df |>
-  # 1. Calculate stats
   group_by(ID) |>
   summarise(
     total_acc = mean(accuracy, na.rm = TRUE),
     se = sd(accuracy, na.rm = TRUE) / sqrt(n()) 
   ) |>
-  # 2. Reorder ID
   mutate(ID = fct_reorder(ID, total_acc)) |>
-  
-  # 3. Plot
   ggplot(aes(x = ID, y = total_acc)) +
-  
-  # FIX A: Use geom_hline for the "Chance Line", not histogram
   geom_hline(yintercept = 0.5, color = "red", linetype = "dashed", size = 1) +
-  
-  # Error bars
   geom_errorbar(aes(ymin = total_acc - se, ymax = total_acc + se), width = 0.2) +
-  
-  # Points
   geom_point(size = 3, color = "steelblue") +
-  
-  # Labels
   labs(title = "Forced choice accuracy",
        subtitle = "Red line (0.5) indicates random choice",
        y = "Mean Accuracy",
@@ -93,21 +80,20 @@ forced_choice_fig <- forced_choice_df |>
   
   theme_fivethirtyeight() +
   
-  # FIX B: Cleaned up theme syntax (removed nested theme call)
+
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
-    legend.position = "none", # No legend needed
+    legend.position = "none", 
     text = element_text(family = "IBM Plex Mono"), 
     plot.title = element_text(size = 12),
-    # FIX C: Show X axis text (rotated) so you can see who is who
     axis.text.x = element_text(angle = 45, hjust = 1, size = 9) 
   ) 
 
-# Display plot
+
 print(forced_choice_fig)
 
-# Save plot
+
 ggsave(
   filename = "forced_choice_fig.png",
   plot = forced_choice_fig,
@@ -141,24 +127,15 @@ simple_accuracy <- d_prime_df |>
     accuracy  = n_correct / n_total
   )
 
-# Preview the data
 head(simple_accuracy)
 ```
 
 ```{r}
 simple_accuracy |>
   ggplot(aes(x = "Participants", y = accuracy)) +
-  
-  # 1. The Chance Line (50%)
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "red", size = 1) +
-  
-  # 2. Boxplot to show the group average and spread
   geom_boxplot(fill = "white", color = "black", width = 0.3, outlier.shape = NA) +
-  
-  # 3. Individual Points (Jittered)
   geom_jitter(width = 0.1, size = 3, alpha = 0.6, color = "steelblue") +
-  
-  # 4. Labels
   labs(title = "Detection Task Accuracy",
        subtitle = "Red Line = 50% (Random Guessing). Points above are performing better than chance.",
        y = "Percent Correct (Hits + Correct Rejections)",
@@ -169,10 +146,7 @@ simple_accuracy |>
 
 ```{r}
 detection_task_fig <- d_prime_df |>
-  # FIX 1: Convert ID to a factor immediately so fct_reorder works later
   mutate(ID = as.factor(ID)) |> 
-  
-  # 1. Calculate accuracy and Standard Error per participant
   group_by(ID) |>
   summarise(
     n_trials = n(),
@@ -182,10 +156,9 @@ detection_task_fig <- d_prime_df |>
     se = sqrt((accuracy * (1 - accuracy)) / n_trials)
   ) |>
   
-  # 2. Reorder ID by Accuracy (lowest to highest)
+  # reorder ID by Accuracy (lowest to highest)
   mutate(ID = fct_reorder(ID, accuracy)) |>
   
-  # 3. Plot
   ggplot(aes(x = ID, y = accuracy)) +
   
   # Chance line (50%)
@@ -193,17 +166,12 @@ detection_task_fig <- d_prime_df |>
   
   # Error bars
   geom_errorbar(aes(ymin = accuracy - se, ymax = accuracy + se), width = 0.2) +
-  
-  # Points
   geom_point(size = 3, color = "steelblue") +
-  
-  # Labels
   labs(title = "Detection Task Accuracy",
        subtitle = "Red line (0.5) indicates random choice",
        y = "Percent Correct (Hits + Correct Rejections)",
        x = "Participant ID") +
   
-  # Formatting
   scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
   theme_fivethirtyeight() +
   theme(
@@ -216,10 +184,10 @@ detection_task_fig <- d_prime_df |>
     axis.text.x = element_text(angle = 45, hjust = 1, size = 9)
   )
 
-# Display plot
+
 print(detection_task_fig)
 
-# Save plot
+
 ggsave(
   filename = "detection_task_fig.png",
   plot = detection_task_fig,
@@ -248,116 +216,10 @@ effect_size
 
 -   If **`p` \> 0.05**: The result is not significantly different from 50/50. The masking was effective (they were guessing).
 
-### Analyse as d-prime
-
-```{r}
-
-# 1. Calculate Signal Detection metrics per participant
-d_prime_stats <- d_prime_df |>
-  group_by(ID) |>
-  summarise(
-    # Count outcomes
-    hits = sum(trial_outcome == "Hit"),
-    fas  = sum(trial_outcome == "False Alarm"),
-    n_signal = sum(signal_type == "present"),
-    n_noise  = sum(signal_type == "absent"),
-    .groups = "drop"
-  ) |>
-  mutate(
-    # Log-linear correction (add 0.5) to handle perfect performance (0 or 1 rates)
-    hit_rate = (hits + 0.5) / (n_signal + 1),
-    fa_rate  = (fas + 0.5) / (n_noise + 1),
-    
-    # Calculate d' (Sensitivity): Ability to distinguish Signal from Noise
-    # 0 = Guessing, > 0 = Detection
-    d_prime = qnorm(hit_rate) - qnorm(fa_rate),
-    
-    # Calculate c (Bias): Tendency to say "Yes" or "No"
-    # 0 = Neutral, Negative = Trigger Happy (Yes!), Positive = Conservative (No!)
-    c_bias = -0.5 * (qnorm(hit_rate) + qnorm(fa_rate))
-  )
-
-# View the first few rows
-head(d_prime_stats)
-```
-
-```{r}
-# Create a composite plot
-library(patchwork) # If you don't have this, you can run the plots separately
-
-# Plot A: Distribution of Sensitivity (d')
-p1 <- d_prime_stats|>
-  ggplot(aes(x = d_prime)) +
-  geom_histogram(binwidth = 0.2, fill = "steelblue", color = "white", alpha = 0.8) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "red", size = 1) +
-  labs(title = "Distribution of Sensitivity (d')",
-       subtitle = "Red Line = Chance Performance (0).",
-       x = "d' (Sensitivity)",
-       y = "Count of Participants") +
-  theme_minimal()
-
-# Plot B: Bias vs Sensitivity
-p2 <- d_prime_stats |>
-  ggplot(aes(x = c_bias, y = d_prime, label = ID)) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_vline(xintercept = 0, linetype = "dotted", color = "gray") +
-  geom_point(size = 3, alpha = 0.6) +
-  geom_text(vjust = -0.5, size = 3, check_overlap = TRUE) +
-  labs(title = "Participant Strategy Map",
-       subtitle = "Are they hearing it (Y-axis) or just guessing (X-axis)?",
-       x = "Response Bias (c) \n(< 0 = Liberal/Yes-bias, > 0 = Conservative/No-bias)",
-       y = "Sensitivity (d')") +
-  theme_minimal()
-
-# Display them
-p1
-p2
-```
-
-```{r}
-# Test if d' is significantly greater than 0
-test_result <- t.test(d_prime_stats$d_prime, mu = 0, alternative = "greater")
-
-print(test_result)
-```
+### 
 
 **interpretation:**
 
 -   If **p \< 0.05**, the group **could statistically hear the primes** (the masking wasn't fully effective).
 
 -   If **p \> 0.05**, the group was effectively **deaf** to the primes (ideal for a subliminal experiment)
-
-```{r}
-sdt_stats <- d_prime_df |>
-  group_by(ID, compression_level) |>
-  summarise(
-    # Count specific outcomes
-    hits = sum(trial_outcome == "Hit"),
-    misses = sum(trial_outcome == "Miss"),
-    crs = sum(trial_outcome == "Correct Rejection"),
-    fas = sum(trial_outcome == "False Alarm"),
-    
-    # Calculate totals
-    n_signal_trials = hits + misses,
-    n_noise_trials = crs + fas,
-    .groups = "drop"
-  ) |>
-  
-  # 2. Calculate d-prime and Criterion (c) with Log-Linear Correction
-  mutate(
-    # Add 0.5 to counts and 1 to denominator to handle 0s and 1s (Hautus, 1995)
-    hit_rate_adj = (hits + 0.5) / (n_signal_trials + 1),
-    fa_rate_adj = (fas + 0.5) / (n_noise_trials + 1),
-    
-    # Calculate d' (Sensitivity)
-    d_prime = qnorm(hit_rate_adj) - qnorm(fa_rate_adj),
-    
-    # Calculate c (Response Bias)
-    # Negative c = Trigger Happy (Says "Present" too much)
-    # Positive c = Conservative (Says "Absent" too much)
-    c_bias = -0.5 * (qnorm(hit_rate_adj) + qnorm(fa_rate_adj))
-  )
-
-# Preview the data
-head(sdt_stats)
-```

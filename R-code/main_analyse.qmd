@@ -47,26 +47,17 @@ print(sort(unique(raw_df$ID)))
 
 ```{r}
 boxplot_fig <- raw_df |>
-  # 1. Filter out no-prime
-  # filter(prime_valence != "no-prime") |>
   
-  # 2. Reorder the Prime Valence so it reads logically (Neg -> Neu -> Pos)
+  # Reorder the Prime Valence so it reads logically 
   mutate(prime_valence = factor(prime_valence, 
                                 levels = c("negative", "neutral", "positive", "no-prime"))) |>
   
-  # 3. Setup the plot: Prime on X, Rating on Y
   ggplot(aes(x = prime_valence, y = response_key, fill = prime_valence)) +
-  
-  # 4. Use Boxplots to show the median and spread of the data
   geom_boxplot(alpha = 0.6, outlier.alpha = 0.2) +
-  
-  # 5. Add a large point to show the MEAN (average) which is often what we care about
   stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "white") +
-  
-  # 6. Facet by the actual expression of the face (Optional, but highly recommended)
   facet_wrap(~facial_expression) +
   
-  # 7. Labels and Theme
+  # Labels and Theme
   labs(title = "Effect of Prime Valence on Ratings",
        subtitle = "White diamond indicates the mean rating (N = 18)",
        y = "Rating (Response Key)",
@@ -89,9 +80,9 @@ boxplot_fig
 ggsave(
   filename = "box-plot-main-results.png",
   plot = boxplot_fig,
-  width = 8,  # Specify width in inches
-  height = 5, # Specify height in inches
-  units = "in" # Specify units
+  width = 8,  
+  height = 5, 
+  units = "in" 
 )
 
 
@@ -102,42 +93,22 @@ ggsave(
 ## ANOVA
 
 ```{r}
-# 1. Aggregate: Calculate mean rating per participant per condition
+
 anova_data <- raw_df |>
   filter(prime_valence != "no-prime") |>
   group_by(ID, prime_valence, facial_expression) |>
   summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop")
 
-# 2. Run the ANOVA on this aggregated data
+
 priming_effects_anova <- anova_data |> 
   anova_test(
-    dv = mean_rating,       # Use the aggregated mean
-    wid = ID,               # Participant ID
+    dv = mean_rating,       
+    wid = ID,               
     within = c(prime_valence, facial_expression),
     effect.size = "ges"
   )
 
-# 3. View Results
 get_anova_table(priming_effects_anova)
-```
-
-```{r}
-pwc_data <- raw_df |>
-  filter(prime_valence != "no-prime") |>
-  group_by(ID, facial_expression, prime_valence) |>
-  summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop")
-
-# 2. RUN TEST: Now run the pairwise test on the aggregated data
-pwc <- pwc_data |>
-  group_by(facial_expression) |> # We still want to see the effect for each face type
-  pairwise_t_test(
-    mean_rating ~ prime_valence,   # Note: use 'mean_rating' here, not response_key
-    paired = TRUE,
-    p.adjust.method = "bonferroni"
-  )
-
-# 3. VIEW RESULTS
-pwc |> select(facial_expression, group1, group2, p.adj, p.adj.signif)
 ```
 
 ## LMM
@@ -148,22 +119,20 @@ pwc |> select(facial_expression, group1, group2, p.adj, p.adj.signif)
 means_table <- raw_df |>
   group_by(facial_expression, prime_valence) |>
   summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop") |>
-  
-  # 4. Spread it out: Make 'prime_valence' the columns
   pivot_wider(names_from = prime_valence, values_from = mean_rating)
 
-# View the result
+
 print(means_table)
 ```
 
 ```{r}
 
 model_lmm <- lmer(response_key ~ pleasure  + 
-                    (1 | ID) +          # Random intercept for Participants
-                    (1 | face_file),      # Random intercept for specific Face items
+                    (1 | ID) +          
+                    (1 | face_file),      
                   data = raw_df)
 
-# Get the results with p-values
+
 summary(model_lmm)
 ```
 
@@ -171,11 +140,10 @@ summary(model_lmm)
 
 ```{r}
 model_lmm <- lmer(response_key ~ pleasure * facial_expression + 
-                    (1 | ID) +            # Random intercept for Participants
-                    (1 | face_file),      # Random intercept for specific Face items
+                    (1 | ID) +        
+                    (1 | face_file),      
                   data = raw_df)
 
-# Get the results with p-values
 summary(model_lmm)
 ```
 
@@ -199,16 +167,12 @@ Look at the **Fixed Effects** section:
 
 ```{r}
 pleasure_score_fig <- raw_df |>
-  filter(prime_valence != "no-prime") |> # Optional: keep or remove 'no-prime'
+  filter(prime_valence != "no-prime") |> 
   ggplot(aes(x = pleasure, y = response_key, color = facial_expression)) +
-  
-  # 1. Add the raw data points (jittered so they don't overlap)
   geom_jitter(alpha = 0.1, height = 0.2, width = 0) + 
   
-  # 2. Add the Linear Trend Lines
   geom_smooth(method = "lm", se = TRUE, aes(fill = facial_expression)) +
   
-  # 3. Aesthetics
   scale_color_brewer(palette = "Set1") +
   scale_fill_brewer(palette = "Set1") +
   labs(title = "Effects of pleasure on face rating",
@@ -221,8 +185,6 @@ pleasure_score_fig <- raw_df |>
   theme_fivethirtyeight() +
   theme(
     axis.title = element_text(),
-    # panel.grid.major.x = element_blank(),
-    # panel.grid.minor.x = element_blank(),
     legend.position = "bottom",
     legend.background = element_rect(fill = "white", color = NA),
     text = element_text(family = "IBM Plex Mono"),
@@ -234,9 +196,9 @@ pleasure_score_fig
 ggsave(
   filename = "pleasure_score_fig.png",
   plot = pleasure_score_fig,
-  width = 8,  # Specify width in inches
-  height = 5, # Specify height in inches
-  units = "in" # Specify units
+  width = 8,  
+  height = 5, 
+  units = "in" 
 )
 
 
@@ -263,7 +225,6 @@ summary_stats <- raw_df |>
 ```{r}
 violin_rt_fig <- raw_df |>
   filter(prime_valence != "no-prime", facial_expression != "Neutral") |> # Neutral is hard to define for congruency
-  # Create a Congruency Column
   mutate(
     congruency = case_when(
       prime_valence == "positive" & facial_expression == "Happy" ~ "Congruent",
@@ -275,16 +236,12 @@ violin_rt_fig <- raw_df |>
   ) |>
   filter(!is.na(congruency)) |> # Remove leftovers
   
-  # Plotting
   ggplot(aes(x = congruency, y = rt, fill = congruency)) +
-  # Violin shows distribution shape
   geom_violin(alpha = 0.5, trim = FALSE) +
-  # Boxplot inside shows the median and interquartile range
   geom_boxplot(width = 0.1, fill = "white", outlier.shape = NA) +
-  # Facet by expression to see if the effect holds for both emotions
   facet_wrap(~facial_expression) +
   scale_fill_manual(values = c("Congruent" = "#00BA38", "Incongruent" = "#F8766D")) +
-  coord_cartesian(ylim = c(0, 4)) + # Zoom in (ignoring extremely long RTs > 4s for clarity)
+  coord_cartesian(ylim = c(0, 4)) +
   labs(
     title = "Reaction Time by Congruency",
     subtitle = "Does matching the prime to the face speed up processing? (N = 18)",
@@ -309,9 +266,9 @@ violin_rt_fig
 ggsave(
   filename = "violin-rt-fig.png",
   plot = violin_rt_fig,
-  width = 8,  # Specify width in inches
-  height = 5, # Specify height in inches
-  units = "in" # Specify units
+  width = 8,  
+  height = 5, 
+  units = "in" 
 )
   
 
@@ -321,7 +278,6 @@ ggsave(
 ## Banova
 
 ```{r}
-# 1. Prepare Data (Exact same logic as your plot)
 rt_bayes_data <- raw_df |>
   filter(prime_valence != "no-prime", facial_expression != "Neutral") |>
   mutate(
@@ -335,12 +291,10 @@ rt_bayes_data <- raw_df |>
   ) |>
   filter(!is.na(congruency)) |>
   
-  # 2. AGGREGATE: Calculate mean RT per Participant per Condition
-  # This is crucial for repeated measures ANOVA
+
   group_by(ID, congruency) |>
   summarise(mean_rt = mean(rt, na.rm = TRUE), .groups = "drop") |>
   
-  # 3. Convert grouping variables to Factors (Required by BayesFactor)
   mutate(
     ID = as.factor(ID),
     congruency = as.factor(congruency)
@@ -351,7 +305,6 @@ rt_bayes_data <- raw_df |>
 ```
 
 ```{r}
-# Run the Bayesian Repeated Measures ANOVA
 rt_bf_model <- anovaBF(
   mean_rt ~ congruency + ID,  # Formula: RT predicted by Congruency + Subject ID
   data = rt_bayes_data, 
@@ -528,46 +481,29 @@ ggsave(
   
 ```
 
-## Habituering
-
-```{r}
-raw_df |>
-  filter(prime_valence != "no-prime") |>
-  ggplot(aes(x = trial_i, y = response_key, color = prime_valence)) +
-  geom_smooth(method = "loess", se = TRUE) + 
-  labs(title = "Effect of Time on Priming (Fatigue Check)",
-       subtitle = "With corrected trial numbering. Do the lines merge on the right?",
-       x = "Chronological Trial Number",
-       y = "Smoothed Rating") +
-  theme_minimal()
-```
-
 # Bayes for main
 
 ```{r}
 
 bf_data <- raw_df |>
-  filter(prime_valence != "no-prime") |> # Ensure you don't have unwanted levels
+  filter(prime_valence != "no-prime") |> 
   group_by(ID, prime_valence, facial_expression) |>
   summarise(mean_rating = mean(response_key, na.rm = TRUE), .groups = "drop") |>
-  # FIX: Convert all grouping columns to Factors
   mutate(
     ID = as.factor(ID),
     prime_valence = as.factor(prime_valence),
     facial_expression = as.factor(facial_expression)
   ) |>
-  as.data.frame() # FIX: BayesFactor sometimes dislikes tibbles
+  as.data.frame() 
 
-# 2. Run the Repeated Measures BANOVA
-# Note: The formula MUST include the ID variable
+
 bf_model <- anovaBF(
   mean_rating ~ prime_valence * facial_expression + ID,
   data = bf_data, 
   whichRandom = "ID",
-  progress = FALSE # Optional: hides the progress bar
+  progress = FALSE 
 )
 
-# 3. View Results
 print(bf_model)
 
 ```

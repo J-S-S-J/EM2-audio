@@ -1,37 +1,5 @@
-"""
-================================================================================
-PsychoPy Subliminal Audio Priming (SDT / d-prime DETECTION)
-================================================================================
 
-Dette script implementerer et Signal Detection Theory (SDT) kontrol-eksperiment.
-- Objektiv: Måle d' (sensitivitet) for at detektere et ord
-             ved 8 forskellige niveauer af tidskomprimering.
-- Design: Deltagere hører en audiosekvens og skal angive,
-          om de hørte et ord eller ej (Ja/Nej).
-- Trials: 50% Signal-Present (et ord er til stede)
-          50% Signal-Absent (stilhed er til stede) 
-- Task: Ja/Nej (2-AFC), 'm' for Ja, 'z' for Nej.
-
-File Struktur:
-/Experiment_Folder/
-|
-├── main_detection_experiment.py  (Dette script)
-├── sensor-beep.wav
-|
-├── /audio/
-|   ├── /0.1/
-|   |   ├── bange_compressed.wav
-|   |   └── ...
-|   ...
-|   └── /0.8/
-|
-├── /masks/
-├── /babbling/
-|
-└── /data_detection/              <-- Ny output mappe
-"""
-
-# --- 1. Import Libraries ---
+# Skal bruges nogen gange (i kælderen)
 # from psychopy import prefs 
 # prefs.hardware['audioLib'] = ['sounddevice', 'PTB', 'pyo', 'pygame']
 
@@ -41,19 +9,13 @@ import random
 from datetime import datetime
 import os.path
 
-# --- 2. Define Constants ---
 
-# Timing (in seconds)
 FIXATION_DURATION = 1.0
 ITI_DURATION = 1.0     # Inter-trial interval
-# BABBLE_DURATION_BEFORE_PRIMES er nu tilfældig (defineres i main loop)
 
-
-# --- Trial Counts & Stimuli Setup ---
 COMPRESSION_LEVELS = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7']
 N_LEVELS = len(COMPRESSION_LEVELS)
 
-# Antal "Signal-Present" trials per niveau
 N_PRACTICE_REPS_PER_LEVEL = 1 # 1 'present' + 1 'absent' per niveau
 N_MAIN_REPS_PER_LEVEL = 7  # plejede at være 15, men er for mange for et kontrol forsøg
 
@@ -61,18 +23,17 @@ N_MAIN_REPS_PER_LEVEL = 7  # plejede at være 15, men er for mange for et kontro
 N_PRACTICE_TRIALS = 2 
 # N_MAIN_TRIALS = 8 levels * 10 reps * 2 types (pres/abs) = 160
 N_MAIN_TRIALS = N_LEVELS * N_MAIN_REPS_PER_LEVEL * 2
+MAIN_TRIAL_BREAK_POINTS = [29, 59, 89, 119, 149]  # [39, 79, 119]
 
 # Taster
 QUIT_KEY = 'escape'
-YES_KEY = 'm' # 'm' er til højre på et QWERTY-tastatur
-NO_KEY = 'z'  # 'z' er til venstre
+YES_KEY = 'm' 
+NO_KEY = 'z'  
 VALID_KEYS = [YES_KEY, NO_KEY, QUIT_KEY]
 
-# Pauser (efter 40, 80, og 120 af de 160 main trials)
-MAIN_TRIAL_BREAK_POINTS = [29, 59, 89, 119, 149]  # [39, 79, 119]
 
 
-# --- 3. Setup Functions ---
+
 
 def get_participant_info():
     """Viser en dialogboks for at få deltagerinfo (ID, session)."""
@@ -139,7 +100,6 @@ def setup_experiment(participant_info):
 
 
 def load_reusable_stimuli(win, base_dir):
-    """Forud-loader alle stimuli der bruges gentagne gange."""
     stimuli = {}
     
     # 1. Fikseringskryds
@@ -217,7 +177,7 @@ def show_instructions(win, text_stim, message, wait_for_key='space'):
         core.quit()
 
 
-# --- 4. Core Logic: Trial Generation ---
+# Core Logic: Trial Generation 
 
 def get_files_from_dir(directory):
     """Hjælperfunktion til at hente filer fra en mappe."""
@@ -285,7 +245,6 @@ def generate_trial_lists(base_dir):
         practice_files = files_in_folder[0:N_PRACTICE_REPS_PER_LEVEL]
         main_files = files_in_folder[N_PRACTICE_REPS_PER_LEVEL : files_needed_per_folder]
         
-        # --- Opret Practice Trials (Present + Absent) ---
         for f in practice_files:
             # Signal-Present trial
             practice_list.append({
@@ -459,24 +418,18 @@ def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock, babbl
     return None
 
 
-# --- 6. Main Experiment Flow ---
 
 def main():
-    """
-    Hovedfunktionen der kører hele eksperimentet.
-    """
     result = None
     try:
-        # --- 1. Setup ---
         participant_info = get_participant_info()
         win, exp_handler, base_dir = setup_experiment(participant_info)
         stimuli = load_reusable_stimuli(win, base_dir)
         rt_clock = core.Clock() 
-        
-        # --- 2. Generer Trial Lister ---
+     
         practice_list, main_list = generate_trial_lists(base_dir)
         
-        # --- 3. Opret Trial Handlers ---
+    
         practice_trials = data.TrialHandler(
             trialList=practice_list, nReps=1, method='sequential', name='practice'
         )
@@ -487,7 +440,7 @@ def main():
         exp_handler.addLoop(practice_trials)
         exp_handler.addLoop(main_trials)
         
-        # --- 4. Kør Træning ---
+        # Træning 
         practice_instructions = (
             "Velkommen til træningsrunden.\n\n"
             "Du vil høre en række lyde. Nogle gange er et ord gemt i lydene,\n"
@@ -511,13 +464,13 @@ def main():
             if result == 'QUIT':
                 break
             
-            # Ingen feedback i træning, som aftalt
+            # Ingen feedback i træning 
             exp_handler.nextEntry() 
 
         if result == 'QUIT':
             raise KeyboardInterrupt("Experiment aborted by user.")
 
-        # --- 5. Kør Hovedeksperiment ---
+        # Hovedeksperiment 
         main_instructions = (
             "Træning er slut. Nu begynder hovedeksperimentet.\n\n"
             "Opgaven er den samme.\n"
@@ -552,7 +505,7 @@ def main():
                 )
                 show_instructions(win, stimuli['instructions'], break_message)
         
-        # --- 6. Afslut Eksperiment ---
+        # Afslut Eksperiment 
         if quit_experiment:
             end_message = "Data er blevet gemt.\n\nTak for din tid."
         else:
@@ -565,7 +518,6 @@ def main():
         logging.error(e)
     
     finally:
-        # --- 7. Oprydning ---
         if 'exp_handler' in locals():
             exp_handler.close()
         
@@ -575,6 +527,6 @@ def main():
         core.quit()
 
 
-# --- 7. Script Execution ---
+
 if __name__ == "__main__":
     main()

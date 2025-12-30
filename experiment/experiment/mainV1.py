@@ -1,40 +1,3 @@
-"""
-================================================================================
-PsychoPy Subliminal Audio Priming Experiment
-================================================================================
-
-This script implements a subliminal audio priming experiment using PsychoPy.
-It is designed to be run as a single procedural (function-based) script.
-
-Experiment Overview:
-- Objective: Test if subliminal audio prime valence (positive, negative, neutral,
-             no-prime) and its congruency with face valence (positive, negative,
-             neutral) affects valence ratings (1-7) and reaction times.
-- Design: Within-subjects, 10 practice trials + 200 main trials.
-- Trial Generation: Face-prime pairings are randomly generated for each
-                   participant at the start of the script.
-
-File Structure (ASSUMED):
-/Experiment_Folder/
-|
-├── main.py                (This script)
-├── face_mask.gif          (A static mask image)
-├── sensor-beep.wav        (End-of-trial sound)
-|
-├── /faces/                (Contains p1.JPG, p2.JPG, ... p210.JPG)
-├── /primes/
-|   ├── /positive/         (e.g., happy.wav)
-|   ├── /negative/         (e.g., sad.wav)
-|   └── /neutrale/         (e.g., table.wav)
-|
-├── /masks/                (Contains word1_rev.wav, ...)
-├── /babbling/             (Contains bab1.wav, ...)
-|
-└── /data/                 (Output directory for CSV/log files)
-
-"""
-
-# --- 1. Import Libraries --- 
 # Bemærk  skal kun bruges nogen steder
 # from psychopy import prefs 
 # prefs.hardware['audioLib'] = ['sounddevice', 'PTB', 'pyo', 'pygame']  
@@ -46,39 +9,33 @@ from datetime import datetime
 
 
 
-# --- 2. Define Constants test ---
 
-# # Timing (in seconds)
+
 FIXATION_DURATION = 1.0
-FACE_DURATION = 1.0  # 500ms
-MASK_DURATION = 0.5  # 250ms
+FACE_DURATION = 1.0  
+MASK_DURATION = 0.5  
 ITI_DURATION = 1.0     # Inter-trial interval
 
 
-# Trial Counts
-N_PRACTICE_TRIALS = 6    # Was 10
-N_MAIN_TRIALS = 194        # Was 200
-N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS # This now equals 10
+N_PRACTICE_TRIALS = 10
+N_MAIN_TRIALS = 200      
+N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS # This now equals 210
 
-# Prime list counts - MUST ALSO SUM TO 10
-N_POS_PRIMES = 66         # Was 70
-N_NEG_PRIMES = 66         # Was 70
-N_NEU_PRIMES = 34         # Was 35
-N_NO_PRIMES = 34         # Was 35
-# (Total: 3 + 3 + 2 + 2 = 10. This matches N_TOTAL_TRIALS)
+# Prime list counts - MUST ALSO SUM TO 210
+N_POS_PRIMES = 70       
+N_NEG_PRIMES = 70        
+N_NEU_PRIMES = 35        
+N_NO_PRIMES = 35        
+
 
 # Rating keys
 RATING_KEYS = ['1', '2', '3', '4', '5', '6', '7','8','9']
 QUIT_KEY = 'escape'
 VALID_KEYS = RATING_KEYS + [QUIT_KEY]
 
-# Block breaks (trial numbers *within the main block*)
-# The old values [49, 99, 149] are outside our 8-trial limit.
-# Set it to [] for no breaks, or [3] for a break after the 4th trial.
 MAIN_TRIAL_BREAK_POINTS = [49, 99, 149]
 
 
-# --- 3. Setup Functions ---
 
 def get_participant_info():
     """
@@ -104,20 +61,6 @@ def get_participant_info():
 
 
 def setup_experiment(participant_info):
-    """
-    Sets up the core PsychoPy components: window, experiment handler, and paths.
-    
-    Args:
-        participant_info (dict): The dictionary from get_participant_info().
-    
-    Returns:
-        tuple: (win, exp_handler, base_dir)
-            - win (visual.Window): The main experiment window.
-            - exp_handler (data.ExperimentHandler): Handler for saving data.
-            - base_dir (str): The absolute path to the script's directory.
-    """
-    # --- Setup File/Folder Paths ---
-    # Assumes the script is in the root 'Experiment_Folder'
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     data_dir = os.path.join(base_dir, 'data')
@@ -407,22 +350,6 @@ def generate_trial_list(base_dir):
 # --- 5. Core Logic: Trial Execution ---
 
 def run_trial(win, base_dir, trial_info, trial_handler, stimuli, rt_clock,bable_duration_before_prime):
-    """
-    Executes a single trial based on the trial_info dictionary.
-    
-    Args:
-        win (visual.Window): The main experiment window.
-        base_dir (str): The absolute path to the script's directory.
-        trial_info (dict): The dictionary for this specific trial.
-        trial_handler (data.TrialHandler): The handler (practice or main).
-        stimuli (dict): Dictionary of pre-loaded stimuli.
-        rt_clock (core.Clock): The clock for timing responses.
-        
-    Returns:
-        str or None: 'QUIT' if user pressed escape, else None.
-    """
-    
-    # --- 1. Fixation ---
     stimuli['fixation'].draw()
     win.flip()
     core.wait(FIXATION_DURATION)
@@ -586,19 +513,6 @@ def main():
             if result == 'QUIT':
                 break
                 
-            # # Show practice feedback
-            # response = practice_trials.data['response_key'][-1]
-            # if response:
-            #     feedback_msg = f"You pressed: {response}"
-            # else:
-            #     feedback_msg = "You did not respond in time."
-                
-            # stimuli['feedback'].setText(feedback_msg)
-            # stimuli['feedback'].draw()
-            # win.flip()
-            # core.wait(1.5)
-            
-            # This is necessary *after* adding data
             exp_handler.nextEntry() 
 
         # Check if user quit during practice

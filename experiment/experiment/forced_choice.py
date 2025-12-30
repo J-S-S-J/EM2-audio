@@ -1,45 +1,28 @@
-"""
-================================================================================
-PsychoPy Subliminal Audio Priming (FORCED-CHOICE CONTROL)
-================================================================================
+# gamle control forsøg som vi stoppede med at bruge
 
-This script implements a 2-Alternative Forced Choice (2AFC) control experiment.
-- Objective: Test if participants can consciously identify the prime word
-             when presented with the same audio masking.
-- Design: Participants hear the full audio sequence (babble, mask, prime, mask)
-          and must then choose the prime word they heard from two
-          on-screen options (the correct word and a random distractor).
-- Task: 2AFC, using 'left' and 'right' arrow keys.
 
-"""
-
-# --- 1. Import Libraries ---
 from psychopy import gui, visual, core, data, event, sound, logging
 import os
 import random
 from datetime import datetime
 import os.path
 
-# --- 2. Define Constants (Test) ---
 
-# Timing (in seconds)
+
+
 FIXATION_DURATION = 1.0
-ITI_DURATION = 1.0     # Inter-trial interval
+ITI_DURATION = 1.0     
 
 
 # Trial Counts
-N_PRACTICE_TRIALS = 5   # Was 10
-N_MAIN_TRIALS = 85     # Was 200
-N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS # This now equals 120
+N_PRACTICE_TRIALS = 5   
+N_MAIN_TRIALS = 85    
+N_TOTAL_TRIALS = N_PRACTICE_TRIALS + N_MAIN_TRIALS 
 
-# Prime list counts - MUST SUM TO 10
-# NOTE: N_NO_PRIMES is removed, as it doesn't work for a 2AFC task.
-N_POS_PRIMES = 30       # Was 3
-N_NEG_PRIMES = 30         # Was 3
-N_NEU_PRIMES = 30         # Was 2
-# (Total: 4 + 3 + 3 = 10. This matches N_TOTAL_TRIALS)
+N_POS_PRIMES = 30     
+N_NEG_PRIMES = 30  
+N_NEU_PRIMES = 30       
 
-# Rating keys
 QUIT_KEY = 'escape'
 CHOICE_KEYS = ['left', 'right']
 VALID_KEYS = CHOICE_KEYS + [QUIT_KEY]
@@ -48,10 +31,8 @@ VALID_KEYS = CHOICE_KEYS + [QUIT_KEY]
 MAIN_TRIAL_BREAK_POINTS = [45]
 
 
-# --- 3. Setup Functions ---
 
 def get_participant_info():
-    """Displays a dialog box to get participant info (ID, session)."""
     exp_info = {
         'Participant ID': '',
         'Session': '001',
