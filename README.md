@@ -110,12 +110,33 @@ Audio processing and stimulus generation:
 ## 🚀 Getting Started
 
 ### Prerequisites
-```bash
-# Python dependencies
-pip install -r sound/requirements.txt
 
-# Core libraries
+#### Core Libraries
+```bash
+# Essential packages for running experiments and analysis
 pip install psychopy pandas numpy scipy jupyter
+
+# For image processing (noise masks)
+pip install pillow
+
+# For audio processing
+pip install librosa soundfile pydub
+
+# For word database (optional)
+pip install deepl
+```
+
+#### R Environment
+```bash
+# Install R and required packages for statistical analysis
+# In R console:
+install.packages(c("tidyverse", "ggplot2", "quarto"))
+```
+
+**Note:** The [sound/requirements.txt](sound/requirements.txt) file is a conda environment export. To recreate the exact conda environment:
+```bash
+conda create --name em2_env --file sound/requirements.txt
+conda activate em2_env
 ```
 
 ### Running Experiments
@@ -128,18 +149,4 @@ pip install psychopy pandas numpy scipy jupyter
 
 ---
 
-## 📚 Key Concepts
 
-- **D-prime (d′):** Sensitivity measure from signal detection theory
-- **Subliminal Priming:** Brief stimulus presentation below conscious threshold
-- **Cross-modal:** Integration of auditory and visual information
-- **Forced-choice:** Binary decision paradigm for measuring perception
-
----
-
-## 📝 Citation
-
-If you use this code or methodology, please cite:
-```
-EM2 Project: Effects of Cross-Modal Emotional Subliminal Priming (2025)
-```
