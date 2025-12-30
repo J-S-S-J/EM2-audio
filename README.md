@@ -1,6 +1,10 @@
-# EM2 Project
+# Effects of Cross-Modal Emotional Subliminal Priming
 
-This repository contains experimental scripts, data processing tools, and analysis code for our EM2 exam project: **Effects of Cross-Modal Emotional Subliminal Priming**.
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![R](https://img.shields.io/badge/R-276DC3?style=for-the-badge&logo=r&logoColor=white)
+![PsychoPy](https://img.shields.io/badge/PsychoPy-00A651?style=for-the-badge&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAACXBIWXMAAAsTAAALEwEAmpwYAAABNUlEQVQokZWSvyvFYRTHP8/rvhe3XCUlg8FgsJjcTRYLZTBZbP4Ag8FkM1gsBoPFYrFYDAaDwWAwGAwGg8Fg8ava+/bce9/3vE/nfM/5fs/3nO8RVUVEcBwHx3FQVUQEEUFVERFUFRHBdV1UVURE8DyPQqGA7/sYY1BVjDGoKsYYVBVjDKqKMQZVxff9QiAYDBIMBlFVVBVVRVURkUIgFAoRCoUKAVUlHA4TDodRVYwxhEIhQqEQqooxhlAoVAgEg0GCwSCqiqqiqoVANBolGo2iqhhjUFVUFWMMqooxBlVFVTHGFAKxWIxYLIaqYoxBVVFVjDGoKsYYVBVjDKqKMaYQiMfjxONxVBVjDKqKqmKMQVUxxqCqqCrGGFQVY0whkEgkSCQSqCqua2OMwXVdjDG4ro0xBte1Mcbgujb/BL4BNwKWyquoted/ggAAAAASUVORK5CYII=&logoColor=white)
+
+This repository contains experimental scripts, data processing tools, and analysis code for our EM2 exam project investigating the effects of cross-modal emotional subliminal priming.
 
 ## Directory Structure
 
