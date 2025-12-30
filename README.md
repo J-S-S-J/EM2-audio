@@ -1,6 +1,6 @@
 # EM2 Project
 
-This repository contains experimental scripts, data processing tools, and analysis code for our EM2 exam project.
+This repository contains experimental scripts, data processing tools, and analysis code for our EM2 exam project: **Effects of Cross-Modal Emotional Subliminal Priming**.
 
 ## Directory Structure
 
